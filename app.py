@@ -8,6 +8,7 @@ import streamlit as st
 from supabase import create_client, Client
 import time
 import random
+import streamlit.components.v1 as components
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN Y CONEXIÓN
