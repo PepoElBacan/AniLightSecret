@@ -629,26 +629,28 @@ def vista_invitados():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Botón de confirmación ──
-    alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
-    hay_extra  = bool(extra_texto.strip())
-
-    if not alguna_qty and not hay_extra:
-        st.caption("Agrega al menos un ítem o una propuesta para confirmar.")
-
+    # ── Botón de confirmación ──
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
     confirmar = st.button(
         "🎉 Confirmar mi Aporte",
         use_container_width=True,
-        disabled=(not alguna_qty and not hay_extra),
         type="primary",
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
-        with st.spinner("Guardando tu aporte... 🎊"):
-            # Escribir aportes en Supabase
-            for iid, qty in st.session_state["buffer"].items():
-                upsert_aporte(nombre, iid, qty)
+        # Validamos aquí para no depender del refresco de la página
+        alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
+        hay_extra  = bool(st.session_state["extra_texto"].strip())
+        
+        if not alguna_qty and not hay_extra:
+            st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
+        else:
+            with st.spinner("Guardando tu aporte... 🎊"):
+                # Escribir aportes en Supabase
+                for iid, qty in st.session_state["buffer"].items():
+                    upsert_aporte(nombre, iid, qty)
+                # ... (el resto del guardado sigue igual)
 
             # Escribir extra si existe
             if hay_extra:
