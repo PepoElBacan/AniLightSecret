@@ -500,6 +500,52 @@ def pantalla_bienvenida():
 # VISTA DE INVITADOS
 # ─────────────────────────────────────────────
 
+def inyectar_animacion_clic():
+    components.html("""
+    <script>
+    try {
+        const doc = window.parent.document;
+        if (!doc.getElementById('animacion-clic-luz')) {
+            doc.addEventListener('click', function(e) {
+                if (e.target.tagName === 'BUTTON' && e.target.innerText.includes('＋')) {
+                    const emojis = ['✨', '🎉', '💖', '🥳', '🎈'];
+                    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                    const el = doc.createElement('div');
+                    
+                    // Estilos del emoji flotante
+                    el.style.position = 'fixed';
+                    el.style.pointerEvents = 'none';
+                    el.style.zIndex = '99999';
+                    el.style.fontSize = '2.2rem';
+                    el.style.left = e.clientX + 'px';
+                    el.style.top = e.clientY + 'px';
+                    el.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
+                    el.style.transform = 'translate(-50%, -50%) scale(0.5)';
+                    el.style.opacity = '1';
+                    el.innerText = emoji;
+                    doc.body.appendChild(el);
+                    
+                    // Forzar el repintado del navegador para que tome la transición
+                    void el.offsetWidth;
+                    
+                    // Mover hacia arriba y desvanecer
+                    el.style.transform = 'translate(-50%, -120px) scale(1.5)';
+                    el.style.opacity = '0';
+                    
+                    // Limpiar el DOM
+                    setTimeout(() => el.remove(), 600);
+                }
+            });
+            const flag = doc.createElement('div');
+            flag.id = 'animacion-clic-luz';
+            doc.body.appendChild(flag);
+        }
+    } catch (err) {
+        console.log("No se pudo inyectar la animación por restricciones del iframe.");
+    }
+    </script>
+    """, height=0, width=0)
+    
 def vista_invitados():
     nombre = st.session_state["nombre"]
 
