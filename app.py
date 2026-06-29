@@ -53,7 +53,8 @@ def inject_styles():
     }
 
     /* Ocultar header/footer de Streamlit */
-    #MainMenu, footer, header { visibility: hidden; }
+    #MainMenu, footer, { visibility: hidden; }
+    header { background: transparent !important; }
 
     /* ── Hero header ── */
     .hero {
