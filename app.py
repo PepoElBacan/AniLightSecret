@@ -141,7 +141,7 @@ def inject_styles():
     /* Number input editable: badge morado, sin flechas nativas */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] {
         margin: 0 !important;
-        width: 100% !important;
+        width: 80% !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] input {
         background: #f3eeff !important;
