@@ -52,8 +52,8 @@ def inject_styles():
         min-height: 100vh;
     }
 
-    /* Ocultar header/footer de Streamlit */
-    #MainMenu, footer, { visibility: hidden; }
+    /* Header transparente y visible; ocultar solo menu y footer */
+    #MainMenu, footer { visibility: hidden; }
     header { background: transparent !important; }
 
     /* ── Hero header ── */
@@ -81,18 +81,85 @@ def inject_styles():
         font-weight: 500;
     }
 
-    /* ── Tarjeta de ítem — usando st.container(border=True) ── */
-    /* Streamlit renderiza border containers como div[data-testid="stVerticalBlockBorderWrapper"] */
+    /* ── Tarjeta de ítem — st.container(border=True) ── */
     div[data-testid="stVerticalBlockBorderWrapper"] {
         border-radius: 16px !important;
-        border: 1.5px solid #f0e8ff !important;
-        box-shadow: 0 2px 8px rgba(100, 60, 180, 0.06) !important;
+        border: 1.5px solid #ede6ff !important;
+        box-shadow: 0 2px 8px rgba(100, 60, 180, 0.07) !important;
         background: #ffffff !important;
         margin-bottom: 0.6rem !important;
         transition: box-shadow 0.2s !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"]:hover {
-        box-shadow: 0 4px 16px rgba(100, 60, 180, 0.12) !important;
+        box-shadow: 0 4px 16px rgba(100, 60, 180, 0.13) !important;
+    }
+
+    /* Centrado vertical de todas las columnas dentro de la tarjeta */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
+        align-items: center !important;
+    }
+    /* Cada celda de columna: flex centrado */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div {
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+    }
+    /* Primera columna (info): alinear a la izquierda */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div:first-child {
+        justify-content: flex-start !important;
+    }
+
+    /* Botones +/- dentro de tarjeta: círculo morado suave */
+    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
+        border-radius: 50% !important;
+        width: 42px !important;
+        height: 42px !important;
+        min-height: 42px !important;
+        min-width: 42px !important;
+        padding: 0 !important;
+        font-size: 1.2rem !important;
+        font-weight: 700 !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
+        margin: 0 auto !important;
+        background: #f3eeff !important;
+        color: #6d28d9 !important;
+        border: 1.5px solid #ddd6fe !important;
+        box-shadow: none !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button:hover {
+        background: #ede0ff !important;
+        border-color: #a78bfa !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button:disabled {
+        opacity: 0.3 !important;
+    }
+
+    /* Number input editable: badge morado, sin flechas nativas */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] {
+        margin: 0 !important;
+        width: 100% !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] input {
+        background: #f3eeff !important;
+        border: 1.5px solid #ddd6fe !important;
+        border-radius: 10px !important;
+        color: #6d28d9 !important;
+        font-weight: 800 !important;
+        font-size: 1.1rem !important;
+        text-align: center !important;
+        padding: 0 !important;
+        height: 42px !important;
+    }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] input:focus {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important;
+    }
+    /* Ocultar flechas nativas del number_input */
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepDown"],
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepUp"] {
+        display: none !important;
     }
     .item-name {
         font-weight: 700;
@@ -108,14 +175,6 @@ def inject_styles():
         font-size: 0.82rem;
         color: #22c55e;
         font-weight: 600;
-    }
-    .qty-badge {
-        background: #f3eeff;
-        color: #6d28d9;
-        border-radius: 10px;
-        padding: 2px 10px;
-        font-weight: 700;
-        font-size: 1.1rem;
     }
 
     /* ── Botones +/- ── */
@@ -511,11 +570,14 @@ def vista_invitados():
             ud        = f" {unidad_i}" if unidad_i else ""
 
             with st.container(border=True):
-                # Fila: emoji + nombre + estado
-                col_info, col_qty, col_menos, col_mas = st.columns([4, 1.5, 1, 1])
+                # Orden: [info] [－] [N editable] [＋]
+                col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
 
                 with col_info:
-                    st.markdown(f'<div class="item-name">{emoji_i} {nombre_i}</div>', unsafe_allow_html=True)
+                    st.markdown(
+                        f'<div class="item-name">{emoji_i} {nombre_i}</div>',
+                        unsafe_allow_html=True,
+                    )
                     if meta_ok and mi_qty == 0:
                         st.markdown('<div class="item-done">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
                     elif faltan > 0:
@@ -523,19 +585,30 @@ def vista_invitados():
                     else:
                         st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
 
-                with col_qty:
-                    st.markdown(f'<div style="display:flex;align-items:center;height:100%;justify-content:center;">'
-                                f'<span class="qty-badge">{mi_qty}</span></div>', unsafe_allow_html=True)
-
                 with col_menos:
-                    if st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0)):
+                    if st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True):
                         buffer[iid] = max(0, mi_qty - 1)
+                        st.session_state["buffer"] = buffer
+                        st.rerun()
+
+                with col_qty:
+                    nuevo_val = st.number_input(
+                        "qty",
+                        min_value=0,
+                        max_value=999,
+                        value=mi_qty,
+                        step=1,
+                        key=f"qty_input_{iid}",
+                        label_visibility="collapsed",
+                    )
+                    if nuevo_val != mi_qty:
+                        buffer[iid] = nuevo_val
                         st.session_state["buffer"] = buffer
                         st.rerun()
 
                 with col_mas:
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
-                    if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas):
+                    if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True):
                         buffer[iid] = mi_qty + 1
                         st.session_state["buffer"] = buffer
                         st.rerun()
