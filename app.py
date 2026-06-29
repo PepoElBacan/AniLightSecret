@@ -585,16 +585,10 @@ def vista_invitados():
                     else:
                         st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
 
-                # 1. Asegurar que el input tenga el valor correcto en el session_state al cargar
-                if f"qty_input_{iid}" not in st.session_state:
-                    st.session_state[f"qty_input_{iid}"] = mi_qty
-
                 with col_menos:
                     if st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True):
                         buffer[iid] = max(0, mi_qty - 1)
                         st.session_state["buffer"] = buffer
-                        # Forzamos la actualización del widget
-                        st.session_state[f"qty_input_{iid}"] = buffer[iid]
                         st.rerun()
 
                 with col_qty:
@@ -602,12 +596,12 @@ def vista_invitados():
                         "qty",
                         min_value=0,
                         max_value=999,
-                        # IMPORTANTE: Ya no usamos value=mi_qty
+                        value=mi_qty,
                         step=1,
-                        key=f"qty_input_{iid}",
+                        # La clave dinámica evita el choque en el session_state
+                        key=f"qty_input_{iid}_{mi_qty}",
                         label_visibility="collapsed",
                     )
-                    # Si el usuario escribe manualmente un número distinto al buffer
                     if nuevo_val != mi_qty:
                         buffer[iid] = nuevo_val
                         st.session_state["buffer"] = buffer
@@ -618,8 +612,6 @@ def vista_invitados():
                     if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True):
                         buffer[iid] = mi_qty + 1
                         st.session_state["buffer"] = buffer
-                        # Forzamos la actualización del widget
-                        st.session_state[f"qty_input_{iid}"] = buffer[iid]
                         st.rerun()
 
     # ── Sección de extras ──
