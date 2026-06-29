@@ -1,0 +1,884 @@
+"""
+🎉 Cumpleaños Sorpresa - Coordinador de Aportes
+Aplicación Streamlit con backend Supabase.
+Archivo único: app.py
+"""
+
+import streamlit as st
+from supabase import create_client, Client
+import time
+
+# ─────────────────────────────────────────────
+# CONFIGURACIÓN Y CONEXIÓN
+# ─────────────────────────────────────────────
+
+st.set_page_config(
+    page_title="🎂 Cumple Luz",
+    page_icon="🎉",
+    layout="centered",
+    initial_sidebar_state="collapsed",
+)
+
+ADMIN_PASSWORD = "admin123"
+
+
+@st.cache_resource
+def get_supabase() -> Client:
+    url = st.secrets["SUPABASE_URL"]
+    key = st.secrets["SUPABASE_KEY"]
+    return create_client(url, key)
+
+
+supabase = get_supabase()
+
+
+# ─────────────────────────────────────────────
+# ESTILOS GLOBALES
+# ─────────────────────────────────────────────
+
+def inject_styles():
+    st.markdown("""
+    <style>
+    /* ── Fuentes y base ── */
+    @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap');
+
+    html, body, [class*="css"] {
+        font-family: 'Plus Jakarta Sans', sans-serif;
+    }
+
+    /* Fondo suave festivo */
+    .stApp {
+        background: linear-gradient(160deg, #fef9f0 0%, #fff5fb 100%);
+        min-height: 100vh;
+    }
+
+    /* Ocultar header/footer de Streamlit */
+    #MainMenu, footer, { visibility: hidden; }
+    header { background: transparent !important; }
+
+    /* ── Hero header ── */
+    .hero {
+        text-align: center;
+        padding: 2.2rem 1rem 1.2rem;
+    }
+    .hero-emoji {
+        font-size: 3.8rem;
+        line-height: 1;
+        margin-bottom: 0.4rem;
+        display: block;
+    }
+    .hero-title {
+        font-size: 1.75rem;
+        font-weight: 800;
+        color: #2d1b4e;
+        margin: 0;
+        letter-spacing: -0.5px;
+    }
+    .hero-sub {
+        font-size: 0.95rem;
+        color: #7c6fa0;
+        margin-top: 0.3rem;
+        font-weight: 500;
+    }
+
+    /* ── Tarjeta de ítem ── */
+    .item-card {
+        background: #ffffff;
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 0.75rem;
+        border: 1.5px solid #f0e8ff;
+        box-shadow: 0 2px 8px rgba(100, 60, 180, 0.06);
+        transition: box-shadow 0.2s;
+    }
+    .item-card:hover {
+        box-shadow: 0 4px 16px rgba(100, 60, 180, 0.12);
+    }
+    .item-name {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #2d1b4e;
+    }
+    .item-status {
+        font-size: 0.82rem;
+        color: #7c6fa0;
+        margin-top: 1px;
+    }
+    .item-done {
+        font-size: 0.82rem;
+        color: #22c55e;
+        font-weight: 600;
+    }
+    .qty-badge {
+        background: #f3eeff;
+        color: #6d28d9;
+        border-radius: 10px;
+        padding: 2px 10px;
+        font-weight: 700;
+        font-size: 1.1rem;
+    }
+
+    /* ── Botones +/- ── */
+    .stButton > button {
+        border-radius: 12px !important;
+        font-weight: 700 !important;
+        font-size: 1.1rem !important;
+        min-height: 44px !important;
+        min-width: 44px !important;
+        border: none !important;
+        transition: transform 0.1s, box-shadow 0.1s !important;
+    }
+    .stButton > button:active {
+        transform: scale(0.95) !important;
+    }
+
+    /* Botón confirmar */
+    .confirm-btn > button {
+        background: linear-gradient(135deg, #7c3aed 0%, #db2777 100%) !important;
+        color: white !important;
+        width: 100% !important;
+        border-radius: 16px !important;
+        font-size: 1.15rem !important;
+        font-weight: 800 !important;
+        padding: 0.85rem !important;
+        box-shadow: 0 4px 20px rgba(124, 58, 237, 0.35) !important;
+        letter-spacing: 0.2px !important;
+        min-height: 56px !important;
+    }
+    .confirm-btn > button:hover {
+        box-shadow: 0 6px 28px rgba(124, 58, 237, 0.5) !important;
+        transform: translateY(-1px) !important;
+    }
+
+    /* ── Alerta de reingreso ── */
+    .reingreso-alert {
+        background: linear-gradient(135deg, #fefce8, #fef9c3);
+        border: 1.5px solid #fde047;
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.2rem;
+    }
+    .reingreso-alert b { color: #78350f; }
+    .reingreso-alert p { color: #92400e; margin: 0; font-size: 0.93rem; }
+
+    /* ── Sección extras ── */
+    .extras-box {
+        background: linear-gradient(135deg, #fdf4ff, #fce7f3);
+        border: 1.5px dashed #e879f9;
+        border-radius: 16px;
+        padding: 1.1rem 1.2rem;
+        margin: 1.5rem 0 1rem;
+    }
+    .extras-title {
+        font-weight: 700;
+        color: #86198f;
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+    }
+    .extras-subtitle {
+        color: #a21caf;
+        font-size: 0.83rem;
+    }
+
+    /* ── Divider ── */
+    .divider {
+        border: none;
+        border-top: 1.5px solid #f0e8ff;
+        margin: 1.4rem 0;
+    }
+
+    /* ── Admin badge ── */
+    .admin-badge {
+        display: inline-block;
+        background: #2d1b4e;
+        color: #e9d5ff;
+        border-radius: 8px;
+        padding: 2px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+    }
+
+    /* ── Progress section ── */
+    .progress-label {
+        font-weight: 600;
+        color: #2d1b4e;
+        font-size: 0.95rem;
+    }
+    .progress-sub {
+        font-size: 0.8rem;
+        color: #7c6fa0;
+    }
+
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stNumberInput > div > div > input {
+        border-radius: 12px !important;
+        border: 1.5px solid #e9d5ff !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
+    }
+
+    /* Streamlit metric */
+    [data-testid="stMetric"] {
+        background: white;
+        border-radius: 14px;
+        padding: 0.8rem;
+        border: 1.5px solid #f0e8ff;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: #2d1b4e !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #e9d5ff !important;
+    }
+    [data-testid="stSidebar"] .stTextInput > div > div > input {
+        background: #3d2a6e !important;
+        border-color: #6d28d9 !important;
+        color: white !important;
+    }
+
+    /* Success box */
+    .success-box {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 1.5px solid #86efac;
+        border-radius: 16px;
+        padding: 1.2rem;
+        text-align: center;
+    }
+    .success-box h3 { color: #15803d; margin: 0; font-size: 1.2rem; }
+    .success-box p  { color: #166534; margin: 0.4rem 0 0; font-size: 0.9rem; }
+
+    /* Mobile tweaks */
+    @media (max-width: 480px) {
+        .hero-title  { font-size: 1.45rem; }
+        .hero-emoji  { font-size: 3rem; }
+        .item-card   { padding: 0.85rem 0.9rem; }
+    }
+    </style>
+    """, unsafe_allow_html=True)
+
+
+# ─────────────────────────────────────────────
+# HELPERS DE BASE DE DATOS
+# ─────────────────────────────────────────────
+
+@st.cache_data(ttl=15)
+def fetch_progreso():
+    """Lee la vista vista_progreso_items (caché de 15 s)."""
+    res = supabase.table("vista_progreso_items").select("*").order("id").execute()
+    return res.data or []
+
+
+def fetch_aportes_invitado(nombre: str):
+    """Aportes actuales de un invitado específico."""
+    res = (
+        supabase.table("aportes")
+        .select("item_id, cantidad, items(nombre, emoji)")
+        .eq("nombre_invitado", nombre)
+        .execute()
+    )
+    return res.data or []
+
+
+def fetch_todos_aportes():
+    res = (
+        supabase.table("aportes")
+        .select("nombre_invitado, cantidad, items(nombre, emoji, unidad)")
+        .order("nombre_invitado")
+        .execute()
+    )
+    return res.data or []
+
+
+def fetch_extras():
+    res = supabase.table("extras").select("*").order("id", desc=True).execute()
+    return res.data or []
+
+
+def upsert_aporte(nombre: str, item_id: int, cantidad: int):
+    """
+    Inserta o actualiza el aporte de un invitado para un ítem.
+    Si cantidad == 0, elimina el registro para mantener la tabla limpia.
+    """
+    if cantidad <= 0:
+        supabase.table("aportes").delete().eq("nombre_invitado", nombre).eq("item_id", item_id).execute()
+    else:
+        supabase.table("aportes").upsert(
+            {"nombre_invitado": nombre, "item_id": item_id, "cantidad": cantidad},
+            on_conflict="nombre_invitado,item_id",
+        ).execute()
+
+
+def insertar_item(nombre: str, cantidad_meta: int, emoji: str, unidad: str = ""):
+    supabase.table("items").insert(
+        {"nombre": nombre, "cantidad_meta": cantidad_meta, "emoji": emoji, "unidad": unidad}
+    ).execute()
+
+
+def insertar_extra(nombre: str, descripcion: str):
+    supabase.table("extras").insert(
+        {"nombre_invitado": nombre, "descripcion": descripcion}
+    ).execute()
+
+
+# ─────────────────────────────────────────────────────
+# SIMULACIÓN DE NOTIFICACIÓN AL ADMIN (ej. con Resend)
+# ─────────────────────────────────────────────────────
+
+def notificar_admin_extra(nombre_invitado: str, descripcion: str):
+    """
+    Envía una notificación al administrador cuando se registra un extra.
+
+    PARA ACTIVAR CON RESEND:
+    1. pip install resend
+    2. Agregar en .streamlit/secrets.toml:
+         RESEND_API_KEY = "re_xxxxxxxxxxxx"
+         ADMIN_EMAIL    = "admin@ejemplo.com"
+    3. Descomentar el bloque siguiente:
+
+    import resend
+    resend.api_key = st.secrets["RESEND_API_KEY"]
+    resend.Emails.send({
+        "from":    "cumple@tudominio.com",
+        "to":      st.secrets["ADMIN_EMAIL"],
+        "subject": f"🎉 Nuevo extra propuesto por {nombre_invitado}",
+        "html":    f"<p><b>{nombre_invitado}</b> sugirió: <em>{descripcion}</em></p>",
+    })
+    """
+    # Simulación de log (modo desarrollo)
+    print(f"[NOTIF] Extra de '{nombre_invitado}': {descripcion}")
+
+
+# ─────────────────────────────────────────────
+# SESSION STATE — INICIALIZACIÓN
+# ─────────────────────────────────────────────
+
+def init_session():
+    defaults = {
+        "nombre":          None,       # Nombre del invitado autenticado
+        "buffer":          {},         # {item_id: cantidad_local}
+        "extra_texto":     "",
+        "enviado":         False,
+        "admin_ok":        False,
+        "mostrar_exito":   False,
+    }
+    for k, v in defaults.items():
+        if k not in st.session_state:
+            st.session_state[k] = v
+
+
+# ─────────────────────────────────────────────
+# PANTALLA DE BIENVENIDA
+# ─────────────────────────────────────────────
+
+def pantalla_bienvenida():
+    st.markdown("""
+    <div class="hero">
+        <span class="hero-emoji">🎂</span>
+        <h1 class="hero-title">¡Es el cumple de Luz!</h1>
+        <p class="hero-sub">La sorpresa más rica necesita tu ayuda 🥳</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+
+    with st.container():
+        st.markdown("**¿Cómo te llamas?**")
+        nombre_input = st.text_input(
+            "Nombre",
+            placeholder="Ej: María García",
+            label_visibility="collapsed",
+            key="input_nombre",
+        )
+
+        col_esp, col_btn = st.columns([2, 1])
+        with col_btn:
+            st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
+            entrar = st.button("Entrar 🎉", use_container_width=True, type="primary")
+            st.markdown("</div>", unsafe_allow_html=True)
+
+    # Enlace discreto al panel admin al pie de la pantalla
+    st.markdown("<br><br>", unsafe_allow_html=True)
+    st.markdown("""
+    <div style="text-align:center;">
+        <a href="?admin=1" target="_self"
+           style="font-size:0.75rem; color:#c4b5d4; text-decoration:none;
+                  letter-spacing:0.5px; opacity:0.6;">
+            ⚙️ Admin
+        </a>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Abrir sidebar automáticamente si llega con ?admin=1
+    if st.query_params.get("admin") == "1":
+        st.markdown("""
+        <script>
+        // Forzar apertura del sidebar de Streamlit
+        const btn = window.parent.document.querySelector('[data-testid="collapsedControl"]');
+        if (btn) btn.click();
+        </script>
+        """, unsafe_allow_html=True)
+        st.info("👈 Ingresa tu contraseña en el panel lateral para acceder.")
+
+    if entrar:
+        nombre = nombre_input.strip()
+        if not nombre:
+            st.warning("¡Escribe tu nombre para continuar! 😊")
+            return
+
+        # Verificar si ya tiene aportes
+        aportes_prev = fetch_aportes_invitado(nombre)
+        st.session_state["nombre"] = nombre
+
+        if aportes_prev:
+            # Inicializar buffer con sus aportes previos
+            st.session_state["buffer"] = {
+                a["item_id"]: a["cantidad"] for a in aportes_prev
+            }
+            # Construir texto descriptivo de sus aportes
+            lista = ", ".join(
+                f"{a['items']['emoji']} {a['items']['nombre']} ×{a['cantidad']}"
+                for a in aportes_prev
+            )
+            st.session_state["reingreso_msg"] = (nombre, lista)
+        else:
+            st.session_state["buffer"] = {}
+            st.session_state.pop("reingreso_msg", None)
+
+        st.rerun()
+
+
+# ─────────────────────────────────────────────
+# VISTA DE INVITADOS
+# ─────────────────────────────────────────────
+
+def vista_invitados():
+    nombre = st.session_state["nombre"]
+
+    # Hero
+    st.markdown(f"""
+    <div class="hero">
+        <span class="hero-emoji">🎊</span>
+        <h1 class="hero-title">¡Hola, {nombre.split()[0]}!</h1>
+        <p class="hero-sub">Elige qué vas a traer para la completada 🍻</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # Alerta de reingreso
+    if "reingreso_msg" in st.session_state:
+        n, lista = st.session_state["reingreso_msg"]
+        st.markdown(f"""
+        <div class="reingreso-alert">
+            <b>¡Ey, ya estabas por acá! 👋</b>
+            <p>Actualmente estás anotado para llevar: <b>{lista}</b>.<br>
+            Puedes ajustar las cantidades y confirmar de nuevo sin problema.</p>
+        </div>
+        """, unsafe_allow_html=True)
+
+    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+
+    # ── Lista de ítems con buffer local ──
+    items = fetch_progreso()
+
+    if not items:
+        st.info("El administrador todavía no ha cargado la lista de ítems. ¡Vuelve pronto!")
+    else:
+        st.markdown("### 🛒 ¿Qué vas a traer?")
+        st.caption("Toca **＋** o **－** para ajustar tu aporte. Los cambios se guardan al final.")
+        st.markdown("")
+
+        buffer: dict = st.session_state["buffer"]
+
+        for item in items:
+            iid       = item["id"]
+            nombre_i  = item["nombre"]
+            emoji_i   = item["emoji"] or "📦"
+            meta      = item["cantidad_meta"]
+            asignado  = item["total_asignado"] or 0
+            mi_qty    = buffer.get(iid, 0)
+            faltan    = max(0, meta - asignado)
+            meta_ok   = asignado >= meta
+            unidad_i  = item.get("unidad") or ""
+            ud        = f" {unidad_i}" if unidad_i else ""
+
+            with st.container():
+                st.markdown(f'<div class="item-card">', unsafe_allow_html=True)
+
+                # Fila: emoji + nombre + estado
+                col_info, col_qty, col_menos, col_mas = st.columns([4, 1.5, 1, 1])
+
+                with col_info:
+                    st.markdown(f'<div class="item-name">{emoji_i} {nombre_i}</div>', unsafe_allow_html=True)
+                    if meta_ok and mi_qty == 0:
+                        st.markdown('<div class="item-done">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
+                    elif faltan > 0:
+                        st.markdown(f'<div class="item-status">Faltan {faltan}{ud} — meta: {meta}{ud}</div>', unsafe_allow_html=True)
+                    else:
+                        st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
+
+                with col_qty:
+                    st.markdown(f'<div style="display:flex;align-items:center;height:100%;justify-content:center;">'
+                                f'<span class="qty-badge">{mi_qty}</span></div>', unsafe_allow_html=True)
+
+                with col_menos:
+                    if st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0)):
+                        buffer[iid] = max(0, mi_qty - 1)
+                        st.session_state["buffer"] = buffer
+                        st.rerun()
+
+                with col_mas:
+                    # Deshabilitar + solo si la meta está cubierta Y yo no llevo nada todavía
+                    deshabilitar_mas = (meta_ok and mi_qty == 0)
+                    if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas):
+                        buffer[iid] = mi_qty + 1
+                        st.session_state["buffer"] = buffer
+                        st.rerun()
+
+                st.markdown("</div>", unsafe_allow_html=True)
+
+    # ── Sección de extras ──
+    st.markdown("""
+    <div class="extras-box">
+        <div class="extras-title">💡 ¿Tienes una idea genial?</div>
+        <div class="extras-subtitle">Algo que no esté en la lista y quieras traer ✨</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    extra_texto = st.text_area(
+        "Tu propuesta",
+        placeholder="Ej: una torta de maracuyá, guirnaldas de luces, una sorpresa especial...",
+        label_visibility="collapsed",
+        value=st.session_state["extra_texto"],
+        height=90,
+        key="input_extra",
+    )
+    st.session_state["extra_texto"] = extra_texto
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Botón de confirmación ──
+    alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
+    hay_extra  = bool(extra_texto.strip())
+
+    if not alguna_qty and not hay_extra:
+        st.caption("Agrega al menos un ítem o una propuesta para confirmar.")
+
+    st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
+    confirmar = st.button(
+        "🎉 Confirmar mi Aporte",
+        use_container_width=True,
+        disabled=(not alguna_qty and not hay_extra),
+        type="primary",
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if confirmar:
+        with st.spinner("Guardando tu aporte... 🎊"):
+            # Escribir aportes en Supabase
+            for iid, qty in st.session_state["buffer"].items():
+                upsert_aporte(nombre, iid, qty)
+
+            # Escribir extra si existe
+            if hay_extra:
+                insertar_extra(nombre, extra_texto.strip())
+                notificar_admin_extra(nombre, extra_texto.strip())
+
+            # Invalidar caché para que todos vean datos frescos
+            fetch_progreso.clear()
+
+            time.sleep(0.6)  # pequeño delay para sensación de proceso
+
+        # Limpiar estado y mostrar éxito
+        st.session_state["extra_texto"] = ""
+        st.session_state.pop("reingreso_msg", None)
+        st.session_state["mostrar_exito"] = True
+        st.rerun()
+
+    # ── Mensaje de éxito ──
+    if st.session_state.get("mostrar_exito"):
+        st.markdown("""
+        <div class="success-box">
+            <h3>🥳 ¡Listo, estás anotado!</h3>
+            <p>Gracias por hacer este cumple especial.<br>
+            Puedes volver a modificar tu aporte cuando quieras.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.session_state["mostrar_exito"] = False
+
+    # Botón para cambiar de nombre
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("← Cambiar nombre", use_container_width=False):
+        st.session_state["nombre"] = None
+        st.session_state["buffer"] = {}
+        st.session_state.pop("reingreso_msg", None)
+        st.rerun()
+
+
+# ─────────────────────────────────────────────
+# VISTA DE ADMINISTRADOR
+# ─────────────────────────────────────────────
+
+def sidebar_admin():
+    with st.sidebar:
+        st.markdown("### 👑 Panel Admin")
+
+        if not st.session_state["admin_ok"]:
+            pw = st.text_input("Contraseña", type="password", key="admin_pw")
+            if st.button("Acceder", use_container_width=True):
+                if pw == ADMIN_PASSWORD:
+                    st.session_state["admin_ok"] = True
+                    st.rerun()
+                else:
+                    st.error("Contraseña incorrecta")
+        else:
+            st.markdown('<span class="admin-badge">ADMIN ACTIVO</span>', unsafe_allow_html=True)
+            if st.button("Cerrar sesión", use_container_width=True):
+                st.session_state["admin_ok"] = False
+                st.rerun()
+
+
+def vista_admin():
+    st.markdown("""
+    <div class="hero">
+        <span class="hero-emoji">👑</span>
+        <h1 class="hero-title">Panel de Control</h1>
+        <p class="hero-sub">Estado en tiempo real de la fiesta 🎉</p>
+    </div>
+    """, unsafe_allow_html=True)
+
+    # ── Tabs ──
+    tab_dashboard, tab_aportes, tab_extras, tab_agregar = st.tabs([
+        "📊 Dashboard", "📋 Aportes", "💡 Extras", "➕ Nuevo ítem"
+    ])
+
+    # ── TAB 1: Dashboard ──
+    with tab_dashboard:
+        st.markdown("#### Progreso por ítem")
+
+        items = fetch_progreso()
+        if not items:
+            st.info("Sin ítems aún. Agrégalos en la pestaña ➕.")
+        else:
+            # Métricas globales
+            total_meta     = sum(i["cantidad_meta"]   for i in items)
+            total_asignado = sum(i["total_asignado"]  for i in items)
+            items_ok       = sum(1 for i in items if i["total_asignado"] >= i["cantidad_meta"])
+
+            m1, m2, m3 = st.columns(3)
+            m1.metric("Ítems en lista",    len(items))
+            m2.metric("Ítems cubiertos",   f"{items_ok}/{len(items)}")
+            m3.metric("Unidades totales",  f"{total_asignado}/{total_meta}")
+
+            st.markdown("<br>", unsafe_allow_html=True)
+
+            for item in items:
+                meta     = item["cantidad_meta"]
+                asignado = item["total_asignado"] or 0
+                pct      = min(1.0, asignado / meta) if meta > 0 else 0
+                emoji_i  = item["emoji"] or "📦"
+                unidad   = item.get("unidad") or ""
+                ud_label = f" {unidad}" if unidad else ""
+
+                col_l, col_r = st.columns([5, 1])
+                with col_l:
+                    st.markdown(
+                        f'<div class="progress-label">{emoji_i} {item["nombre"]}</div>'
+                        f'<div class="progress-sub">{asignado}{ud_label} de {meta}{ud_label} — {int(pct*100)}%</div>',
+                        unsafe_allow_html=True,
+                    )
+                    st.progress(pct)
+                with col_r:
+                    if asignado >= meta:
+                        st.markdown("<br>✅", unsafe_allow_html=True)
+                    else:
+                        st.markdown(f"<br><span style='color:#7c6fa0;font-size:0.85rem;'>Faltan {meta-asignado}{ud_label}</span>", unsafe_allow_html=True)
+
+                st.markdown("")
+
+    # ── TAB 2: Aportes desglosados ──
+    with tab_aportes:
+        st.markdown("#### ¿Quién lleva qué?")
+
+        aportes = fetch_todos_aportes()
+        if not aportes:
+            st.info("Nadie ha confirmado aportes todavía.")
+        else:
+            # Construir tabla
+            rows = []
+            for a in aportes:
+                unidad_a = a["items"].get("unidad") or ""
+                cant_str = f"{a['cantidad']} {unidad_a}".strip()
+                rows.append({
+                    "Invitado":  a["nombre_invitado"],
+                    "Ítem":      f"{a['items']['emoji']} {a['items']['nombre']}",
+                    "Cantidad":  cant_str,
+                })
+
+            import pandas as pd
+            df = pd.DataFrame(rows)
+            st.dataframe(
+                df,
+                use_container_width=True,
+                hide_index=True,
+                column_config={
+                    "Invitado": st.column_config.TextColumn("👤 Invitado"),
+                    "Ítem":     st.column_config.TextColumn("🛒 Ítem"),
+                    "Cantidad": st.column_config.NumberColumn("🔢 Cant.", format="%d"),
+                },
+            )
+            st.caption(f"Total de registros: {len(rows)}")
+
+    # ── TAB 3: Extras ──
+    with tab_extras:
+        st.markdown("#### 💡 Propuestas de los invitados")
+
+        extras = fetch_extras()
+        if not extras:
+            st.info("Nadie ha propuesto extras aún.")
+        else:
+            for ex in extras:
+                with st.container():
+                    st.markdown(
+                        f"**{ex['nombre_invitado']}** — {ex['descripcion']}"
+                    )
+                    st.markdown("<hr class='divider'>", unsafe_allow_html=True)
+
+    # ── TAB 4: Agregar ítem ──
+    with tab_agregar:
+        st.markdown("#### ➕ Nuevo ítem para la lista")
+
+        with st.form("form_nuevo_item", clear_on_submit=True):
+            col_e, col_n = st.columns([1, 4])
+            with col_e:
+                emoji_nuevo = st.text_input("Emoji", value="🍕", max_chars=4)
+            with col_n:
+                nombre_nuevo = st.text_input("Nombre del ítem", placeholder="Ej: Empanadas")
+
+            col_meta, col_unidad = st.columns([1, 2])
+            with col_meta:
+                meta_nueva = st.number_input("Cantidad meta", min_value=1, max_value=9999, value=10)
+            with col_unidad:
+                unidad_nueva = st.text_input(
+                    "Tipo de unidad",
+                    placeholder="Ej: litros, bolsas, unidades, gramos…",
+                    help="Se mostrará junto a la cantidad. Puedes escribir lo que quieras.",
+                )
+
+            submitted = st.form_submit_button("Agregar ítem ✅", use_container_width=True)
+
+        if submitted:
+            if nombre_nuevo.strip():
+                insertar_item(
+                    nombre_nuevo.strip(),
+                    int(meta_nueva),
+                    emoji_nuevo.strip(),
+                    unidad_nueva.strip(),
+                )
+                fetch_progreso.clear()
+                st.success(f"¡Ítem '{nombre_nuevo}' agregado exitosamente! 🎊")
+                st.rerun()
+            else:
+                st.warning("El nombre del ítem no puede estar vacío.")
+
+
+# ─────────────────────────────────────────────
+# MAIN
+# ─────────────────────────────────────────────
+
+def main():
+    inject_styles()
+    init_session()
+    sidebar_admin()
+
+    # Ruta de admin
+    if st.session_state["admin_ok"]:
+        vista_admin()
+        return
+
+    # Ruta de invitado
+    if st.session_state["nombre"] is None:
+        pantalla_bienvenida()
+    else:
+        vista_invitados()
+
+
+if __name__ == "__main__":
+    main()
+
+
+# ══════════════════════════════════════════════════════════════════
+#  SQL PARA SUPABASE — PEGAR EN SQL EDITOR → RUN
+# ══════════════════════════════════════════════════════════════════
+#
+# -- 1. Tabla de ítems
+# CREATE TABLE IF NOT EXISTS items (
+#   id             SERIAL PRIMARY KEY,
+#   nombre         TEXT    NOT NULL,
+#   cantidad_meta  INT     NOT NULL DEFAULT 1,
+#   emoji          TEXT    DEFAULT '📦',
+#   unidad         TEXT    DEFAULT ''   -- Ej: 'litros', 'bolsas', 'unidades', 'gramos'
+# );
+#
+# -- Si ya creaste la tabla sin la columna unidad, agrégala con:
+# ALTER TABLE items ADD COLUMN IF NOT EXISTS unidad TEXT DEFAULT '';
+#
+# -- 2. Tabla de aportes (un registro por invitado + ítem)
+# CREATE TABLE IF NOT EXISTS aportes (
+#   id                SERIAL PRIMARY KEY,
+#   nombre_invitado   TEXT NOT NULL,
+#   item_id           INT  NOT NULL REFERENCES items(id) ON DELETE CASCADE,
+#   cantidad          INT  NOT NULL DEFAULT 0,
+#   UNIQUE (nombre_invitado, item_id)   -- necesario para el upsert
+# );
+#
+# -- 3. Tabla de extras
+# CREATE TABLE IF NOT EXISTS extras (
+#   id               SERIAL PRIMARY KEY,
+#   nombre_invitado  TEXT NOT NULL,
+#   descripcion      TEXT NOT NULL,
+#   creado_en        TIMESTAMPTZ DEFAULT NOW()
+# );
+#
+# -- 4. Vista de progreso (se actualiza en tiempo real)
+# CREATE OR REPLACE VIEW vista_progreso_items AS
+# SELECT
+#   i.id,
+#   i.nombre,
+#   i.cantidad_meta,
+#   i.emoji,
+#   i.unidad,
+#   COALESCE(SUM(a.cantidad), 0) AS total_asignado
+# FROM items i
+# LEFT JOIN aportes a ON a.item_id = i.id
+# GROUP BY i.id, i.nombre, i.cantidad_meta, i.emoji, i.unidad
+# ORDER BY i.id;
+#
+# -- 5. Habilitar Row Level Security + políticas públicas de lectura/escritura
+# --    (para la demo sin autenticación; en producción ajusta según necesidad)
+# ALTER TABLE items  ENABLE ROW LEVEL SECURITY;
+# ALTER TABLE aportes ENABLE ROW LEVEL SECURITY;
+# ALTER TABLE extras  ENABLE ROW LEVEL SECURITY;
+#
+# CREATE POLICY "public_read_items"   ON items   FOR SELECT USING (true);
+# CREATE POLICY "public_read_aportes" ON aportes FOR SELECT USING (true);
+# CREATE POLICY "public_write_aportes" ON aportes FOR ALL    USING (true) WITH CHECK (true);
+# CREATE POLICY "public_write_extras"  ON extras  FOR ALL    USING (true) WITH CHECK (true);
+# -- La vista hereda los permisos de las tablas base, no requiere política propia.
+# -- Si usas anon key, asegúrate de que "anon" tenga SELECT en la vista:
+# GRANT SELECT ON vista_progreso_items TO anon;
+# GRANT ALL    ON aportes TO anon;
+# GRANT ALL    ON extras  TO anon;
+# GRANT SELECT ON items   TO anon;
+# GRANT USAGE, SELECT ON SEQUENCE aportes_id_seq TO anon;
+# GRANT USAGE, SELECT ON SEQUENCE extras_id_seq  TO anon;
+#
+# ══════════════════════════════════════════════════════════════════
