@@ -613,11 +613,13 @@ def vista_invitados():
                 )
 
         # ── Implementación de la cuadrícula de 3 columnas ──
-        columnas_grid = st.columns(3) 
+        columnas_grid = st.columns(3)
+        
+        # Iteramos sobre los ítems
         for idx, item in enumerate(items):
+            # Usamos el módulo (%) para distribuir en esas 3 columnas
             with columnas_grid[idx % 3]:
                 renderizar_fila(item)
-
     st.markdown("""
     <div class="extras-box">
         <div class="extras-title">💡 ¿Tienes una idea genial?</div>
