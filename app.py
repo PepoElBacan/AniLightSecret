@@ -20,13 +20,18 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
+ADMIN_PASSWORD = "l4luzesco0l"
+
+
 @st.cache_resource
 def get_supabase() -> Client:
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     return create_client(url, key)
 
+
 supabase = get_supabase()
+
 
 # ─────────────────────────────────────────────
 # ESTILOS GLOBALES
@@ -94,16 +99,18 @@ def inject_styles():
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
+    /* Cada celda de columna: flex centrado */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
+    /* Primera columna (info): alinear a la izquierda */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div:first-child {
         justify-content: flex-start !important;
     }
 
-    /* Botones +/- dentro de tarjeta */
+    /* Botones +/- dentro de tarjeta: círculo morado suave */
     div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
         border-radius: 50% !important;
         width: 42px !important;
@@ -150,15 +157,28 @@ def inject_styles():
         border-color: #7c3aed !important;
         box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important;
     }
+    /* Ocultar flechas nativas del number_input */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepDown"],
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepUp"] {
         display: none !important;
     }
-    .item-name { font-weight: 700; font-size: 1.05rem; color: #2d1b4e; }
-    .item-status { font-size: 0.82rem; color: #7c6fa0; margin-top: 1px; }
-    .item-done { font-size: 0.82rem; color: #22c55e; font-weight: 600; }
+    .item-name {
+        font-weight: 700;
+        font-size: 1.05rem;
+        color: #2d1b4e;
+    }
+    .item-status {
+        font-size: 0.82rem;
+        color: #7c6fa0;
+        margin-top: 1px;
+    }
+    .item-done {
+        font-size: 0.82rem;
+        color: #22c55e;
+        font-weight: 600;
+    }
 
-    /* ── Botones +/- genéricos ── */
+    /* ── Botones +/- ── */
     .stButton > button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -168,7 +188,9 @@ def inject_styles():
         border: none !important;
         transition: transform 0.1s, box-shadow 0.1s !important;
     }
-    .stButton > button:active { transform: scale(0.95) !important; }
+    .stButton > button:active {
+        transform: scale(0.95) !important;
+    }
 
     /* Botón confirmar */
     .confirm-btn > button {
@@ -188,43 +210,122 @@ def inject_styles():
         transform: translateY(-1px) !important;
     }
 
-    /* ── Alertas y cajas ── */
-    .reingreso-alert { background: linear-gradient(135deg, #fefce8, #fef9c3); border: 1.5px solid #fde047; border-radius: 16px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; }
+    /* ── Alerta de reingreso ── */
+    .reingreso-alert {
+        background: linear-gradient(135deg, #fefce8, #fef9c3);
+        border: 1.5px solid #fde047;
+        border-radius: 16px;
+        padding: 1rem 1.2rem;
+        margin-bottom: 1.2rem;
+    }
     .reingreso-alert b { color: #78350f; }
     .reingreso-alert p { color: #92400e; margin: 0; font-size: 0.93rem; }
 
-    .extras-box { background: linear-gradient(135deg, #fdf4ff, #fce7f3); border: 1.5px dashed #e879f9; border-radius: 16px; padding: 1.1rem 1.2rem; margin: 1.5rem 0 1rem; }
-    .extras-title { font-weight: 700; color: #86198f; font-size: 1rem; margin-bottom: 0.2rem; }
-    .extras-subtitle { color: #a21caf; font-size: 0.83rem; }
+    /* ── Sección extras ── */
+    .extras-box {
+        background: linear-gradient(135deg, #fdf4ff, #fce7f3);
+        border: 1.5px dashed #e879f9;
+        border-radius: 16px;
+        padding: 1.1rem 1.2rem;
+        margin: 1.5rem 0 1rem;
+    }
+    .extras-title {
+        font-weight: 700;
+        color: #86198f;
+        font-size: 1rem;
+        margin-bottom: 0.2rem;
+    }
+    .extras-subtitle {
+        color: #a21caf;
+        font-size: 0.83rem;
+    }
 
-    .success-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1.5px solid #86efac; border-radius: 16px; padding: 1.2rem; text-align: center; }
+    /* ── Divider ── */
+    .divider {
+        border: none;
+        border-top: 1.5px solid #f0e8ff;
+        margin: 1.4rem 0;
+    }
+
+    /* ── Admin badge ── */
+    .admin-badge {
+        display: inline-block;
+        background: #2d1b4e;
+        color: #e9d5ff;
+        border-radius: 8px;
+        padding: 2px 12px;
+        font-size: 0.78rem;
+        font-weight: 700;
+        letter-spacing: 1px;
+        margin-bottom: 1rem;
+    }
+
+    /* ── Progress section ── */
+    .progress-label {
+        font-weight: 600;
+        color: #2d1b4e;
+        font-size: 0.95rem;
+    }
+    .progress-sub {
+        font-size: 0.8rem;
+        color: #7c6fa0;
+    }
+
+    /* Input fields */
+    .stTextInput > div > div > input,
+    .stTextArea > div > div > textarea,
+    .stNumberInput > div > div > input {
+        border-radius: 12px !important;
+        border: 1.5px solid #e9d5ff !important;
+        font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+    .stTextInput > div > div > input:focus,
+    .stTextArea > div > div > textarea:focus {
+        border-color: #7c3aed !important;
+        box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
+    }
+
+    /* Streamlit metric */
+    [data-testid="stMetric"] {
+        background: white;
+        border-radius: 14px;
+        padding: 0.8rem;
+        border: 1.5px solid #f0e8ff;
+    }
+
+    /* Sidebar */
+    [data-testid="stSidebar"] {
+        background: #2d1b4e !important;
+    }
+    [data-testid="stSidebar"] * {
+        color: #e9d5ff !important;
+    }
+    [data-testid="stSidebar"] .stTextInput > div > div > input {
+        background: #3d2a6e !important;
+        border-color: #6d28d9 !important;
+        color: white !important;
+    }
+
+    /* Success box */
+    .success-box {
+        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
+        border: 1.5px solid #86efac;
+        border-radius: 16px;
+        padding: 1.2rem;
+        text-align: center;
+    }
     .success-box h3 { color: #15803d; margin: 0; font-size: 1.2rem; }
     .success-box p  { color: #166534; margin: 0.4rem 0 0; font-size: 0.9rem; }
 
-    .divider { border: none; border-top: 1.5px solid #f0e8ff; margin: 1.4rem 0; }
-    .admin-badge { display: inline-block; background: #2d1b4e; color: #e9d5ff; border-radius: 8px; padding: 2px 12px; font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 1rem; }
-    .progress-label { font-weight: 600; color: #2d1b4e; font-size: 0.95rem; }
-    .progress-sub { font-size: 0.8rem; color: #7c6fa0; }
-
-    /* Inputs */
-    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stNumberInput > div > div > input {
-        border-radius: 12px !important; border: 1.5px solid #e9d5ff !important; font-family: 'Plus Jakarta Sans', sans-serif !important;
-    }
-    .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
-        border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
-    }
-
-    [data-testid="stMetric"] { background: white; border-radius: 14px; padding: 0.8rem; border: 1.5px solid #f0e8ff; }
-    [data-testid="stSidebar"] { background: #2d1b4e !important; }
-    [data-testid="stSidebar"] * { color: #e9d5ff !important; }
-    [data-testid="stSidebar"] .stTextInput > div > div > input { background: #3d2a6e !important; border-color: #6d28d9 !important; color: white !important; }
-
+    /* Mobile tweaks */
     @media (max-width: 480px) {
         .hero-title  { font-size: 1.45rem; }
         .hero-emoji  { font-size: 3rem; }
+        .item-card   { padding: 0.85rem 0.9rem; }
     }
     </style>
     """, unsafe_allow_html=True)
+
 
 # ─────────────────────────────────────────────
 # HELPERS DE BASE DE DATOS
@@ -232,22 +333,42 @@ def inject_styles():
 
 @st.cache_data(ttl=15)
 def fetch_progreso():
+    """Lee la vista vista_progreso_items (caché de 15 s)."""
     res = supabase.table("vista_progreso_items").select("*").order("id").execute()
     return res.data or []
 
+
 def fetch_aportes_invitado(nombre: str):
-    res = supabase.table("aportes").select("item_id, cantidad, items(nombre, emoji)").eq("nombre_invitado", nombre).execute()
+    """Aportes actuales de un invitado específico."""
+    res = (
+        supabase.table("aportes")
+        .select("item_id, cantidad, items(nombre, emoji)")
+        .eq("nombre_invitado", nombre)
+        .execute()
+    )
     return res.data or []
 
+
 def fetch_todos_aportes():
-    res = supabase.table("aportes").select("nombre_invitado, cantidad, items(nombre, emoji, unidad)").order("nombre_invitado").execute()
+    res = (
+        supabase.table("aportes")
+        .select("nombre_invitado, cantidad, items(nombre, emoji, unidad)")
+        .order("nombre_invitado")
+        .execute()
+    )
     return res.data or []
+
 
 def fetch_extras():
     res = supabase.table("extras").select("*").order("id", desc=True).execute()
     return res.data or []
 
+
 def upsert_aporte(nombre: str, item_id: int, cantidad: int):
+    """
+    Inserta o actualiza el aporte de un invitado para un ítem.
+    Si cantidad == 0, elimina el registro para mantener la tabla limpia.
+    """
     if cantidad <= 0:
         supabase.table("aportes").delete().eq("nombre_invitado", nombre).eq("item_id", item_id).execute()
     else:
@@ -256,78 +377,45 @@ def upsert_aporte(nombre: str, item_id: int, cantidad: int):
             on_conflict="nombre_invitado,item_id",
         ).execute()
 
+
 def insertar_item(nombre: str, cantidad_meta: int, emoji: str, unidad: str = ""):
-    supabase.table("items").insert({"nombre": nombre, "cantidad_meta": cantidad_meta, "emoji": emoji, "unidad": unidad}).execute()
+    supabase.table("items").insert(
+        {"nombre": nombre, "cantidad_meta": cantidad_meta, "emoji": emoji, "unidad": unidad}
+    ).execute()
+
 
 def insertar_extra(nombre: str, descripcion: str):
-    supabase.table("extras").insert({"nombre_invitado": nombre, "descripcion": descripcion}).execute()
+    supabase.table("extras").insert(
+        {"nombre_invitado": nombre, "descripcion": descripcion}
+    ).execute()
+
+
+# ─────────────────────────────────────────────────────
+# SIMULACIÓN DE NOTIFICACIÓN AL ADMIN
+# ─────────────────────────────────────────────────────
 
 def notificar_admin_extra(nombre_invitado: str, descripcion: str):
     print(f"[NOTIF] Extra de '{nombre_invitado}': {descripcion}")
 
-# ─────────────────────────────────────────────
-# ANIMACIÓN LLUVIA DE EMOJIS
-# ─────────────────────────────────────────────
-
-def lanzar_lluvia_emojis(emojis_usuario):
-    """Inyecta CSS y HTML para generar una lluvia de emojis en pantalla completa."""
-    emojis_cumple = ["🎂", "🎉", "🎈", "🎁", "🥳", "✨", "🍻", "🎊"]
-    todos_emojis = emojis_usuario + emojis_cumple
-
-    css_animacion = """
-    <style>
-    @keyframes caer {
-        0% { top: -10vh; transform: translateX(0) rotate(0deg); opacity: 1; }
-        100% { top: 110vh; transform: translateX(30px) rotate(360deg); opacity: 0; }
-    }
-    .gota-emoji {
-        position: fixed;
-        z-index: 999999;
-        pointer-events: none;
-        animation: caer linear forwards;
-        user-select: none;
-    }
-    </style>
-    <div id="contenedor-lluvia">
-    """
-    
-    for _ in range(70):
-        emoji = random.choice(todos_emojis)
-        left = random.uniform(0, 100)
-        duracion = random.uniform(2.5, 4.5)
-        delay = random.uniform(0, 1.5)
-        size = random.uniform(1.5, 3.5)
-        css_animacion += f'<div class="gota-emoji" style="left: {left}vw; animation-duration: {duracion}s; animation-delay: {delay}s; font-size: {size}rem;">{emoji}</div>\n'
-    
-    css_animacion += """
-    </div>
-    <script>
-    setTimeout(() => {
-        const el = document.getElementById('contenedor-lluvia');
-        if(el) el.remove();
-    }, 6000);
-    </script>
-    """
-    # Se inyecta en el main loop de la aplicación
-    st.markdown(css_animacion, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# SESSION STATE
+# SESSION STATE — INICIALIZACIÓN
 # ─────────────────────────────────────────────
 
 def init_session():
     defaults = {
-        "nombre": None,
-        "buffer": {},
-        "extra_texto": "",
-        "enviado": False,
-        "admin_ok": False,
-        "mostrar_exito": False,
-        "emojis_lluvia": [],
+        "nombre":          None,
+        "buffer":          {},
+        "extra_texto":     "",
+        "enviado":         False,
+        "admin_ok":        False,
+        "mostrar_exito":   False,
+        "emojis_lluvia":   [],
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
+
 
 # ─────────────────────────────────────────────
 # PANTALLA DE BIENVENIDA
@@ -363,7 +451,8 @@ def pantalla_bienvenida():
     st.markdown("""
     <div style="text-align:center;">
         <a href="?admin=1" target="_self"
-           style="font-size:0.75rem; color:#c4b5d4; text-decoration:none; letter-spacing:0.5px; opacity:0.6;">
+           style="font-size:0.75rem; color:#c4b5d4; text-decoration:none;
+                  letter-spacing:0.5px; opacity:0.6;">
             ⚙️ Admin
         </a>
     </div>
@@ -383,19 +472,28 @@ def pantalla_bienvenida():
         if len(nombre.split()) < 2:
             st.warning("¡Por favor incluye tu apellido para no confundirte con otro invitado! 😊")
             return
+        if not nombre:
+            st.warning("¡Escribe tu nombre para continuar! 😊")
+            return
 
         aportes_prev = fetch_aportes_invitado(nombre)
         st.session_state["nombre"] = nombre
 
         if aportes_prev:
-            st.session_state["buffer"] = {a["item_id"]: a["cantidad"] for a in aportes_prev}
-            lista = ", ".join(f"{a['items']['emoji']} {a['items']['nombre']} ×{a['cantidad']}" for a in aportes_prev)
+            st.session_state["buffer"] = {
+                a["item_id"]: a["cantidad"] for a in aportes_prev
+            }
+            lista = ", ".join(
+                f"{a['items']['emoji']} {a['items']['nombre']} ×{a['cantidad']}"
+                for a in aportes_prev
+            )
             st.session_state["reingreso_msg"] = (nombre, lista)
         else:
             st.session_state["buffer"] = {}
             st.session_state.pop("reingreso_msg", None)
 
         st.rerun()
+
 
 # ─────────────────────────────────────────────
 # VISTA DE INVITADOS
@@ -507,7 +605,11 @@ def vista_invitados():
     st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-    confirmar = st.button("🎉 Confirmar mi Aporte", use_container_width=True, type="primary")
+    confirmar = st.button(
+        "🎉 Confirmar mi Aporte",
+        use_container_width=True,
+        type="primary",
+    )
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
@@ -517,14 +619,14 @@ def vista_invitados():
         if not alguna_qty and not hay_extra:
             st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
         else:
-            # Recopilar emojis para la lluvia
-            emojis_seleccionados = []
-            for item in items:
-                if st.session_state["buffer"].get(item["id"], 0) > 0:
-                    emojis_seleccionados.append(item["emoji"] or "📦")
-            st.session_state["emojis_lluvia"] = emojis_seleccionados
-
             with st.spinner("Guardando tu aporte... 🎊"):
+                emojis_aportes = []
+                for item in items:
+                    iid = item["id"]
+                    qty = st.session_state["buffer"].get(iid, 0)
+                    if qty > 0:
+                        emojis_aportes.append(item["emoji"] or "📦")
+                        
                 for iid, qty in st.session_state["buffer"].items():
                     upsert_aporte(nombre, iid, qty)
 
@@ -532,7 +634,11 @@ def vista_invitados():
                     insertar_extra(nombre, extra_texto.strip())
                     notificar_admin_extra(nombre, extra_texto.strip())
 
+            emojis_base = ["🎂", "🥳", "🎉", "🎈", "✨"]
+            st.session_state["emojis_lluvia"] = list(set(emojis_aportes + emojis_base))
+
             fetch_progreso.clear()
+
             time.sleep(0.6)
 
             st.session_state["extra_texto"] = ""
@@ -540,10 +646,37 @@ def vista_invitados():
             st.session_state["mostrar_exito"] = True
             st.rerun()
 
-    # Mostrar alerta de éxito y gatillar animación
     if st.session_state.get("mostrar_exito"):
-        # Llamar a la función que inyecta la animación
-        lanzar_lluvia_emojis(st.session_state.get("emojis_lluvia", []))
+        # Generar animación CSS de lluvia de emojis
+        lluvia_html = """
+        <style>
+        .emoji-drop {
+            position: fixed;
+            top: -10vh;
+            z-index: 999999;
+            animation-name: fall;
+            animation-timing-function: linear;
+            animation-fill-mode: forwards;
+            pointer-events: none;
+            user-select: none;
+        }
+        @keyframes fall {
+            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
+            80% { opacity: 1; }
+            100% { transform: translateY(115vh) rotate(360deg); opacity: 0; }
+        }
+        </style>
+        """
+        
+        for _ in range(60):
+            e = random.choice(st.session_state["emojis_lluvia"])
+            left = random.randint(0, 100)
+            dur = random.uniform(2.5, 4.5)
+            delay = random.uniform(0, 1.5)
+            size = random.randint(25, 45)
+            lluvia_html += f'<div class="emoji-drop" style="left:{left}vw; animation-duration:{dur}s; animation-delay:{delay}s; font-size:{size}px;">{e}</div>'
+        
+        st.markdown(lluvia_html, unsafe_allow_html=True)
         
         st.markdown("""
         <div class="success-box">
@@ -561,6 +694,7 @@ def vista_invitados():
         st.session_state.pop("reingreso_msg", None)
         st.rerun()
 
+
 # ─────────────────────────────────────────────
 # VISTA DE ADMINISTRADOR
 # ─────────────────────────────────────────────
@@ -570,11 +704,9 @@ def sidebar_admin():
         st.markdown("### 👑 Panel Admin")
 
         if not st.session_state["admin_ok"]:
-            # Usar la clave cargada desde secrets
-            admin_pw_correcta = st.secrets.get("ADMIN_PASSWORD", "l4luzesco0l")
             pw = st.text_input("Contraseña", type="password", key="admin_pw")
             if st.button("Acceder", use_container_width=True):
-                if pw == admin_pw_correcta:
+                if pw == ADMIN_PASSWORD:
                     st.session_state["admin_ok"] = True
                     st.rerun()
                 else:
@@ -584,6 +716,7 @@ def sidebar_admin():
             if st.button("Cerrar sesión", use_container_width=True):
                 st.session_state["admin_ok"] = False
                 st.rerun()
+
 
 def vista_admin():
     st.markdown("""
@@ -600,11 +733,6 @@ def vista_admin():
 
     with tab_dashboard:
         st.markdown("#### Progreso por ítem")
-        
-        # Botón sutil para refrescar la caché manualmente si es necesario
-        if st.button("🔄 Actualizar Datos", use_container_width=True):
-            fetch_progreso.clear()
-            st.rerun()
 
         items = fetch_progreso()
         if not items:
@@ -671,7 +799,7 @@ def vista_admin():
                 column_config={
                     "Invitado": st.column_config.TextColumn("👤 Invitado"),
                     "Ítem":     st.column_config.TextColumn("🛒 Ítem"),
-                    "Cantidad": st.column_config.TextColumn("🔢 Cant."),
+                    "Cantidad": st.column_config.NumberColumn("🔢 Cant.", format="%d"),
                 },
             )
             st.caption(f"Total de registros: {len(rows)}")
@@ -685,7 +813,9 @@ def vista_admin():
         else:
             for ex in extras:
                 with st.container():
-                    st.markdown(f"**{ex['nombre_invitado']}** — {ex['descripcion']}")
+                    st.markdown(
+                        f"**{ex['nombre_invitado']}** — {ex['descripcion']}"
+                    )
                     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
     with tab_agregar:
@@ -712,12 +842,18 @@ def vista_admin():
 
         if submitted:
             if nombre_nuevo.strip():
-                insertar_item(nombre_nuevo.strip(), int(meta_nueva), emoji_nuevo.strip(), unidad_nueva.strip())
+                insertar_item(
+                    nombre_nuevo.strip(),
+                    int(meta_nueva),
+                    emoji_nuevo.strip(),
+                    unidad_nueva.strip(),
+                )
                 fetch_progreso.clear()
                 st.success(f"¡Ítem '{nombre_nuevo}' agregado exitosamente! 🎊")
                 st.rerun()
             else:
                 st.warning("El nombre del ítem no puede estar vacío.")
+
 
 # ─────────────────────────────────────────────
 # MAIN
@@ -737,14 +873,6 @@ def main():
     else:
         vista_invitados()
 
+
 if __name__ == "__main__":
     main()
-
-# ══════════════════════════════════════════════════════════════════
-#  SQL PARA SUPABASE — CORRECCIONES Y POLÍTICAS
-# ══════════════════════════════════════════════════════════════════
-# Asegúrate de ejecutar esto en tu Supabase si no lo hiciste antes:
-#
-# CREATE POLICY "public_insert_items" ON items FOR INSERT WITH CHECK (true);
-# 
-# ══════════════════════════════════════════════════════════════════
