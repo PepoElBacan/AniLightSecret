@@ -580,6 +580,9 @@ def vista_invitados():
 
         buffer: dict = st.session_state["buffer"]
 
+        # Llamamos a la animación justo antes de renderizar los ítems
+        inyectar_animacion_clic()
+
         @st.fragment
         def renderizar_fila(item):
             iid       = item["id"]
@@ -594,7 +597,6 @@ def vista_invitados():
 
             mi_qty = st.session_state["buffer"].get(iid, 0)
 
-            # Callbacks corregidos para velocidad instantánea y sincronización
             def restar():
                 nuevo_val = max(0, st.session_state["buffer"].get(iid, 0) - 1)
                 st.session_state["buffer"][iid] = nuevo_val
@@ -609,33 +611,38 @@ def vista_invitados():
                 st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
 
             with st.container(border=True):
-                col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
+                # Encabezado centrado para encajar en la columna
+                st.markdown(f'<div style="text-align:center;"><div class="item-name" style="font-size:1.15rem;">{emoji_i} {nombre_i}</div></div>', unsafe_allow_html=True)
+                
+                if meta_ok and mi_qty == 0:
+                    st.markdown('<div class="item-done" style="text-align:center;">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
+                elif faltan > 0:
+                    st.markdown(f'<div class="item-status" style="text-align:center;">Faltan {faltan}{ud}</div>', unsafe_allow_html=True)
+                else:
+                    st.markdown('<div class="item-status" style="text-align:center;">Meta cubierta 🎉</div>', unsafe_allow_html=True)
 
-                with col_info:
-                    st.markdown(f'<div class="item-name">{emoji_i} {nombre_i}</div>', unsafe_allow_html=True)
-                    if meta_ok and mi_qty == 0:
-                        st.markdown('<div class="item-done">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
-                    elif faltan > 0:
-                        st.markdown(f'<div class="item-status">Faltan {faltan}{ud} — meta: {meta}{ud}</div>', unsafe_allow_html=True)
-                    else:
-                        st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
+                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
 
+                # Controles distribuidos simétricamente
+                col_menos, col_qty, col_mas = st.columns([1, 1.5, 1])
                 with col_menos:
                     st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True, on_click=restar)
-
                 with col_qty:
                     st.number_input(
                         "qty", min_value=0, max_value=999, value=mi_qty, step=1,
                         key=f"qty_input_{iid}", label_visibility="collapsed",
                         on_change=actualizar_input
                     )
-
                 with col_mas:
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
                     st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
 
-        for item in items:
-            renderizar_fila(item)
+        # ── Implementación de la cuadrícula de 3 columnas ──
+        columnas_grid = st.columns(3)
+        for idx, item in enumerate(items):
+            # El módulo (%) distribuye secuencialmente: 0, 1, 2, 0, 1, 2...
+            with columnas_grid[idx % 3]:
+                renderizar_fila(item)
 
     st.markdown("""
     <div class="extras-box">
