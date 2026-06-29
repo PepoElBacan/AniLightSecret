@@ -557,15 +557,8 @@ def vista_invitados():
 
         buffer: dict = st.session_state["buffer"]
 
-        # 1. Definir funciones súper rápidas (Callbacks)
-        def sumar(k):
-            st.session_state[k] += 1
-
-        def restar(k):
-            st.session_state[k] = max(0, st.session_state[k] - 1)
-
-        # 2. Renderizar la lista
-        for item in items:
+        @st.fragment
+        def renderizar_fila(item):
             iid       = item["id"]
             nombre_i  = item["nombre"]
             emoji_i   = item["emoji"] or "📦"
@@ -576,12 +569,18 @@ def vista_invitados():
             unidad_i  = item.get("unidad") or ""
             ud        = f" {unidad_i}" if unidad_i else ""
 
-            # Conectar el input directamente al buffer sin demoras
-            input_key = f"qty_{iid}"
-            if input_key not in st.session_state:
-                st.session_state[input_key] = st.session_state["buffer"].get(iid, 0)
-            
-            mi_qty = st.session_state[input_key]
+            # Leer siempre la última versión del estado
+            mi_qty = st.session_state["buffer"].get(iid, 0)
+
+            # Callbacks para velocidad instantánea
+            def restar():
+                st.session_state["buffer"][iid] = max(0, st.session_state["buffer"].get(iid, 0) - 1)
+
+            def sumar():
+                st.session_state["buffer"][iid] = st.session_state["buffer"].get(iid, 0) + 1
+
+            def actualizar_input():
+                st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
 
             with st.container(border=True):
                 col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
@@ -596,25 +595,99 @@ def vista_invitados():
                         st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
 
                 with col_menos:
-                    st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), on_click=restar, args=(input_key,), use_container_width=True)
+                    st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True, on_click=restar)
 
                 with col_qty:
-                    nuevo_val = st.number_input(
-                        "qty", 
-                        min_value=0, 
-                        max_value=999, 
-                        value=mi_qty, 
-                        step=1,
-                        key=f"qty_input_{iid}",  # <-- Eliminamos _{mi_qty}
-                        label_visibility="collapsed"
+                    st.number_input(
+                        "qty", min_value=0, max_value=999, value=mi_qty, step=1,
+                        key=f"qty_input_{iid}", label_visibility="collapsed",
+                        on_change=actualizar_input
                     )
-                    if nuevo_val != mi_qty:
-                        st.session_state["buffer"][iid] = nuevo_val
-                        st.rerun(scope="fragment")
 
                 with col_mas:
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
-                    st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, on_click=sumar, args=(input_key,), use_container_width=True)
+                    st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
+
+        # El ciclo principal llamando al fragmento
+        for item in items:
+            renderizar_fila(item)
+
+    # ── Sección de extras ──
+    st.markdown("""
+    <div class="extras-box">
+        <div class="extras-title">💡 ¿Tienes una idea genial?</div>
+        <div class="extras-subtitle">Algo que no esté en la lista y quieras traer ✨</div>
+    </div>
+    """, unsafe_allow_html=True)
+
+    extra_texto = st.text_area(
+        "Tu propuesta",
+        placeholder="Ej: una torta de maracuyá, guirnaldas de luces, una sorpresa especial...",
+        label_visibility="collapsed",
+        value=st.session_state["extra_texto"],
+        height=90,
+        key="input_extra",
+    )
+    st.session_state["extra_texto"] = extra_texto
+
+    st.markdown("<br>", unsafe_allow_html=True)
+
+    # ── Botón de confirmación ──
+    st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
+    confirmar = st.button(
+        "🎉 Confirmar mi Aporte",
+        use_container_width=True,
+        type="primary",
+    )
+    st.markdown("</div>", unsafe_allow_html=True)
+
+    if confirmar:
+        alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
+        hay_extra  = bool(st.session_state["extra_texto"].strip())
+        
+        if not alguna_qty and not hay_extra:
+            st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
+        else:
+            with st.spinner("Guardando tu aporte... 🎊"):
+                # Escribir aportes en Supabase
+                for iid, qty in st.session_state["buffer"].items():
+                    upsert_aporte(nombre, iid, qty)
+
+                # Escribir extra si existe
+                if hay_extra:
+                    insertar_extra(nombre, extra_texto.strip())
+                    notificar_admin_extra(nombre, extra_texto.strip())
+
+            # Invalidar caché para que todos vean datos frescos
+            fetch_progreso.clear()
+
+            import time
+            time.sleep(0.6)
+
+            # Limpiar estado y mostrar éxito
+            st.session_state["extra_texto"] = ""
+            st.session_state.pop("reingreso_msg", None)
+            st.session_state["mostrar_exito"] = True
+            st.rerun()
+
+    # ── Mensaje de éxito ──
+    if st.session_state.get("mostrar_exito"):
+        st.markdown("""
+        <div class="success-box">
+            <h3>🥳 ¡Listo, estás anotado!</h3>
+            <p>Gracias por hacer este cumple especial.<br>
+            Puedes volver a modificar tu aporte cuando quieras.</p>
+        </div>
+        """, unsafe_allow_html=True)
+        st.session_state["mostrar_exito"] = False
+
+    # Botón para cambiar de nombre
+    st.markdown("<br>", unsafe_allow_html=True)
+    if st.button("← Cambiar nombre", use_container_width=False):
+        st.session_state["nombre"] = None
+        st.session_state["buffer"] = {}
+        st.session_state.pop("reingreso_msg", None)
+        st.rerun()
                     
     # ── Sección de extras ──
     st.markdown("""
