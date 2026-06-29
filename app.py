@@ -583,64 +583,38 @@ def vista_invitados():
         # Llamamos a la animación justo antes de renderizar los ítems
         inyectar_animacion_clic()
 
+        # Reemplaza la definición de renderizar_fila dentro de vista_invitados
         @st.fragment
         def renderizar_fila(item):
-            iid       = item["id"]
-            nombre_i  = item["nombre"]
-            emoji_i   = item["emoji"] or "📦"
-            meta      = item["cantidad_meta"]
-            asignado  = item["total_asignado"] or 0
-            faltan    = max(0, meta - asignado)
-            meta_ok   = asignado >= meta
-            unidad_i  = item.get("unidad") or ""
-            ud        = f" {unidad_i}" if unidad_i else ""
+            iid = item["id"]
+            nombre_i = item["nombre"]
+            emoji_i = item["emoji"] or "📦"
+            meta = item["cantidad_meta"]
+            asignado = item["total_asignado"] or 0
+            faltan = max(0, meta - asignado)
+            unidad_i = item.get("unidad") or ""
+            ud = f" {unidad_i}" if unidad_i else ""
 
             mi_qty = st.session_state["buffer"].get(iid, 0)
 
-            def restar():
-                nuevo_val = max(0, st.session_state["buffer"].get(iid, 0) - 1)
-                st.session_state["buffer"][iid] = nuevo_val
-                st.session_state[f"qty_input_{iid}"] = nuevo_val
-
-            def sumar():
-                nuevo_val = st.session_state["buffer"].get(iid, 0) + 1
-                st.session_state["buffer"][iid] = nuevo_val
-                st.session_state[f"qty_input_{iid}"] = nuevo_val
-
-            def actualizar_input():
-                st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
-
             with st.container(border=True):
-                # Encabezado centrado para encajar en la columna
-                st.markdown(f'<div style="text-align:center;"><div class="item-name" style="font-size:1.15rem;">{emoji_i} {nombre_i}</div></div>', unsafe_allow_html=True)
+                # Emoji grande centrado
+                st.markdown(f'<div style="text-align:center; font-size:3rem; margin-bottom:0.5rem;">{emoji_i}</div>', unsafe_allow_html=True)
+                # Título
+                st.markdown(f'<div style="text-align:center; font-weight:700; color:#2d1b4e; font-size:1.1rem;">{nombre_i}</div>', unsafe_allow_html=True)
+                # Info estado
+                st.markdown(f'<div style="text-align:center; font-size:0.85rem; color:#7c6fa0; margin-bottom:1rem;">Faltan {faltan}{ud}</div>', unsafe_allow_html=True)
                 
-                if meta_ok and mi_qty == 0:
-                    st.markdown('<div class="item-done" style="text-align:center;">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
-                elif faltan > 0:
-                    st.markdown(f'<div class="item-status" style="text-align:center;">Faltan {faltan}{ud}</div>', unsafe_allow_html=True)
-                else:
-                    st.markdown('<div class="item-status" style="text-align:center;">Meta cubierta 🎉</div>', unsafe_allow_html=True)
-
-                st.markdown("<div style='height:12px;'></div>", unsafe_allow_html=True)
-
-                # Controles distribuidos simétricamente
-                col_menos, col_qty, col_mas = st.columns([1, 1.5, 1])
-                with col_menos:
-                    st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True, on_click=restar)
-                with col_qty:
-                    st.number_input(
-                        "qty", min_value=0, max_value=999, value=mi_qty, step=1,
-                        key=f"qty_input_{iid}", label_visibility="collapsed",
-                        on_change=actualizar_input
-                    )
-                with col_mas:
-                    deshabilitar_mas = (meta_ok and mi_qty == 0)
-                    st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
+                # Input centralizado (Streamlit manejará sus propios botones +/- nativos)
+                st.number_input(
+                    "Cantidad", min_value=0, max_value=999, value=mi_qty, step=1,
+                    key=f"qty_input_{iid}", label_visibility="collapsed",
+                    on_change=lambda: st.session_state["buffer"].update({iid: st.session_state[f"qty_input_{iid}"]})
+                )
 
         # ── Implementación de la cuadrícula de 3 columnas ──
-        columnas_grid = st.columns(3)
+        columnas_grid = st.columns(3) 
         for idx, item in enumerate(items):
-            # El módulo (%) distribuye secuencialmente: 0, 1, 2, 0, 1, 2...
             with columnas_grid[idx % 3]:
                 renderizar_fila(item)
 
