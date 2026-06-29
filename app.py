@@ -618,7 +618,7 @@ def vista_invitados():
         # Iteramos sobre los ítems
         for idx, item in enumerate(items):
             # Usamos el módulo (%) para distribuir en esas 3 columnas
-            with columnas_grid[idx % 3]:
+            with columnas_grid[idx % 2]:
                 renderizar_fila(item)
     st.markdown("""
     <div class="extras-box">
