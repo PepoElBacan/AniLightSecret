@@ -7,6 +7,7 @@ Archivo único: app.py
 import streamlit as st
 from supabase import create_client, Client
 import time
+import random
 
 # ─────────────────────────────────────────────
 # CONFIGURACIÓN Y CONEXIÓN
@@ -19,18 +20,13 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-ADMIN_PASSWORD = "l4luzesco0l"
-
-
 @st.cache_resource
 def get_supabase() -> Client:
     url = st.secrets["SUPABASE_URL"]
     key = st.secrets["SUPABASE_KEY"]
     return create_client(url, key)
 
-
 supabase = get_supabase()
-
 
 # ─────────────────────────────────────────────
 # ESTILOS GLOBALES
@@ -98,18 +94,16 @@ def inject_styles():
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
-    /* Cada celda de columna: flex centrado */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
-    /* Primera columna (info): alinear a la izquierda */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div:first-child {
         justify-content: flex-start !important;
     }
 
-    /* Botones +/- dentro de tarjeta: círculo morado suave */
+    /* Botones +/- dentro de tarjeta */
     div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
         border-radius: 50% !important;
         width: 42px !important;
@@ -156,28 +150,15 @@ def inject_styles():
         border-color: #7c3aed !important;
         box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important;
     }
-    /* Ocultar flechas nativas del number_input */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepDown"],
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepUp"] {
         display: none !important;
     }
-    .item-name {
-        font-weight: 700;
-        font-size: 1.05rem;
-        color: #2d1b4e;
-    }
-    .item-status {
-        font-size: 0.82rem;
-        color: #7c6fa0;
-        margin-top: 1px;
-    }
-    .item-done {
-        font-size: 0.82rem;
-        color: #22c55e;
-        font-weight: 600;
-    }
+    .item-name { font-weight: 700; font-size: 1.05rem; color: #2d1b4e; }
+    .item-status { font-size: 0.82rem; color: #7c6fa0; margin-top: 1px; }
+    .item-done { font-size: 0.82rem; color: #22c55e; font-weight: 600; }
 
-    /* ── Botones +/- ── */
+    /* ── Botones +/- genéricos ── */
     .stButton > button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -187,9 +168,7 @@ def inject_styles():
         border: none !important;
         transition: transform 0.1s, box-shadow 0.1s !important;
     }
-    .stButton > button:active {
-        transform: scale(0.95) !important;
-    }
+    .stButton > button:active { transform: scale(0.95) !important; }
 
     /* Botón confirmar */
     .confirm-btn > button {
@@ -209,122 +188,43 @@ def inject_styles():
         transform: translateY(-1px) !important;
     }
 
-    /* ── Alerta de reingreso ── */
-    .reingreso-alert {
-        background: linear-gradient(135deg, #fefce8, #fef9c3);
-        border: 1.5px solid #fde047;
-        border-radius: 16px;
-        padding: 1rem 1.2rem;
-        margin-bottom: 1.2rem;
-    }
+    /* ── Alertas y cajas ── */
+    .reingreso-alert { background: linear-gradient(135deg, #fefce8, #fef9c3); border: 1.5px solid #fde047; border-radius: 16px; padding: 1rem 1.2rem; margin-bottom: 1.2rem; }
     .reingreso-alert b { color: #78350f; }
     .reingreso-alert p { color: #92400e; margin: 0; font-size: 0.93rem; }
 
-    /* ── Sección extras ── */
-    .extras-box {
-        background: linear-gradient(135deg, #fdf4ff, #fce7f3);
-        border: 1.5px dashed #e879f9;
-        border-radius: 16px;
-        padding: 1.1rem 1.2rem;
-        margin: 1.5rem 0 1rem;
-    }
-    .extras-title {
-        font-weight: 700;
-        color: #86198f;
-        font-size: 1rem;
-        margin-bottom: 0.2rem;
-    }
-    .extras-subtitle {
-        color: #a21caf;
-        font-size: 0.83rem;
-    }
+    .extras-box { background: linear-gradient(135deg, #fdf4ff, #fce7f3); border: 1.5px dashed #e879f9; border-radius: 16px; padding: 1.1rem 1.2rem; margin: 1.5rem 0 1rem; }
+    .extras-title { font-weight: 700; color: #86198f; font-size: 1rem; margin-bottom: 0.2rem; }
+    .extras-subtitle { color: #a21caf; font-size: 0.83rem; }
 
-    /* ── Divider ── */
-    .divider {
-        border: none;
-        border-top: 1.5px solid #f0e8ff;
-        margin: 1.4rem 0;
-    }
-
-    /* ── Admin badge ── */
-    .admin-badge {
-        display: inline-block;
-        background: #2d1b4e;
-        color: #e9d5ff;
-        border-radius: 8px;
-        padding: 2px 12px;
-        font-size: 0.78rem;
-        font-weight: 700;
-        letter-spacing: 1px;
-        margin-bottom: 1rem;
-    }
-
-    /* ── Progress section ── */
-    .progress-label {
-        font-weight: 600;
-        color: #2d1b4e;
-        font-size: 0.95rem;
-    }
-    .progress-sub {
-        font-size: 0.8rem;
-        color: #7c6fa0;
-    }
-
-    /* Input fields */
-    .stTextInput > div > div > input,
-    .stTextArea > div > div > textarea,
-    .stNumberInput > div > div > input {
-        border-radius: 12px !important;
-        border: 1.5px solid #e9d5ff !important;
-        font-family: 'Plus Jakarta Sans', sans-serif !important;
-    }
-    .stTextInput > div > div > input:focus,
-    .stTextArea > div > div > textarea:focus {
-        border-color: #7c3aed !important;
-        box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
-    }
-
-    /* Streamlit metric */
-    [data-testid="stMetric"] {
-        background: white;
-        border-radius: 14px;
-        padding: 0.8rem;
-        border: 1.5px solid #f0e8ff;
-    }
-
-    /* Sidebar */
-    [data-testid="stSidebar"] {
-        background: #2d1b4e !important;
-    }
-    [data-testid="stSidebar"] * {
-        color: #e9d5ff !important;
-    }
-    [data-testid="stSidebar"] .stTextInput > div > div > input {
-        background: #3d2a6e !important;
-        border-color: #6d28d9 !important;
-        color: white !important;
-    }
-
-    /* Success box */
-    .success-box {
-        background: linear-gradient(135deg, #f0fdf4, #dcfce7);
-        border: 1.5px solid #86efac;
-        border-radius: 16px;
-        padding: 1.2rem;
-        text-align: center;
-    }
+    .success-box { background: linear-gradient(135deg, #f0fdf4, #dcfce7); border: 1.5px solid #86efac; border-radius: 16px; padding: 1.2rem; text-align: center; }
     .success-box h3 { color: #15803d; margin: 0; font-size: 1.2rem; }
     .success-box p  { color: #166534; margin: 0.4rem 0 0; font-size: 0.9rem; }
 
-    /* Mobile tweaks */
+    .divider { border: none; border-top: 1.5px solid #f0e8ff; margin: 1.4rem 0; }
+    .admin-badge { display: inline-block; background: #2d1b4e; color: #e9d5ff; border-radius: 8px; padding: 2px 12px; font-size: 0.78rem; font-weight: 700; letter-spacing: 1px; margin-bottom: 1rem; }
+    .progress-label { font-weight: 600; color: #2d1b4e; font-size: 0.95rem; }
+    .progress-sub { font-size: 0.8rem; color: #7c6fa0; }
+
+    /* Inputs */
+    .stTextInput > div > div > input, .stTextArea > div > div > textarea, .stNumberInput > div > div > input {
+        border-radius: 12px !important; border: 1.5px solid #e9d5ff !important; font-family: 'Plus Jakarta Sans', sans-serif !important;
+    }
+    .stTextInput > div > div > input:focus, .stTextArea > div > div > textarea:focus {
+        border-color: #7c3aed !important; box-shadow: 0 0 0 3px rgba(124,58,237,0.12) !important;
+    }
+
+    [data-testid="stMetric"] { background: white; border-radius: 14px; padding: 0.8rem; border: 1.5px solid #f0e8ff; }
+    [data-testid="stSidebar"] { background: #2d1b4e !important; }
+    [data-testid="stSidebar"] * { color: #e9d5ff !important; }
+    [data-testid="stSidebar"] .stTextInput > div > div > input { background: #3d2a6e !important; border-color: #6d28d9 !important; color: white !important; }
+
     @media (max-width: 480px) {
         .hero-title  { font-size: 1.45rem; }
         .hero-emoji  { font-size: 3rem; }
-        .item-card   { padding: 0.85rem 0.9rem; }
     }
     </style>
     """, unsafe_allow_html=True)
-
 
 # ─────────────────────────────────────────────
 # HELPERS DE BASE DE DATOS
@@ -332,42 +232,22 @@ def inject_styles():
 
 @st.cache_data(ttl=15)
 def fetch_progreso():
-    """Lee la vista vista_progreso_items (caché de 15 s)."""
     res = supabase.table("vista_progreso_items").select("*").order("id").execute()
     return res.data or []
 
-
 def fetch_aportes_invitado(nombre: str):
-    """Aportes actuales de un invitado específico."""
-    res = (
-        supabase.table("aportes")
-        .select("item_id, cantidad, items(nombre, emoji)")
-        .eq("nombre_invitado", nombre)
-        .execute()
-    )
+    res = supabase.table("aportes").select("item_id, cantidad, items(nombre, emoji)").eq("nombre_invitado", nombre).execute()
     return res.data or []
-
 
 def fetch_todos_aportes():
-    res = (
-        supabase.table("aportes")
-        .select("nombre_invitado, cantidad, items(nombre, emoji, unidad)")
-        .order("nombre_invitado")
-        .execute()
-    )
+    res = supabase.table("aportes").select("nombre_invitado, cantidad, items(nombre, emoji, unidad)").order("nombre_invitado").execute()
     return res.data or []
-
 
 def fetch_extras():
     res = supabase.table("extras").select("*").order("id", desc=True).execute()
     return res.data or []
 
-
 def upsert_aporte(nombre: str, item_id: int, cantidad: int):
-    """
-    Inserta o actualiza el aporte de un invitado para un ítem.
-    Si cantidad == 0, elimina el registro para mantener la tabla limpia.
-    """
     if cantidad <= 0:
         supabase.table("aportes").delete().eq("nombre_invitado", nombre).eq("item_id", item_id).execute()
     else:
@@ -376,64 +256,78 @@ def upsert_aporte(nombre: str, item_id: int, cantidad: int):
             on_conflict="nombre_invitado,item_id",
         ).execute()
 
-
 def insertar_item(nombre: str, cantidad_meta: int, emoji: str, unidad: str = ""):
-    supabase.table("items").insert(
-        {"nombre": nombre, "cantidad_meta": cantidad_meta, "emoji": emoji, "unidad": unidad}
-    ).execute()
-
+    supabase.table("items").insert({"nombre": nombre, "cantidad_meta": cantidad_meta, "emoji": emoji, "unidad": unidad}).execute()
 
 def insertar_extra(nombre: str, descripcion: str):
-    supabase.table("extras").insert(
-        {"nombre_invitado": nombre, "descripcion": descripcion}
-    ).execute()
-
-
-# ─────────────────────────────────────────────────────
-# SIMULACIÓN DE NOTIFICACIÓN AL ADMIN (ej. con Resend)
-# ─────────────────────────────────────────────────────
+    supabase.table("extras").insert({"nombre_invitado": nombre, "descripcion": descripcion}).execute()
 
 def notificar_admin_extra(nombre_invitado: str, descripcion: str):
-    """
-    Envía una notificación al administrador cuando se registra un extra.
-
-    PARA ACTIVAR CON RESEND:
-    1. pip install resend
-    2. Agregar en .streamlit/secrets.toml:
-         RESEND_API_KEY = "re_xxxxxxxxxxxx"
-         ADMIN_EMAIL    = "admin@ejemplo.com"
-    3. Descomentar el bloque siguiente:
-
-    import resend
-    resend.api_key = st.secrets["RESEND_API_KEY"]
-    resend.Emails.send({
-        "from":    "cumple@tudominio.com",
-        "to":      st.secrets["ADMIN_EMAIL"],
-        "subject": f"🎉 Nuevo extra propuesto por {nombre_invitado}",
-        "html":    f"<p><b>{nombre_invitado}</b> sugirió: <em>{descripcion}</em></p>",
-    })
-    """
-    # Simulación de log (modo desarrollo)
     print(f"[NOTIF] Extra de '{nombre_invitado}': {descripcion}")
 
+# ─────────────────────────────────────────────
+# ANIMACIÓN LLUVIA DE EMOJIS
+# ─────────────────────────────────────────────
+
+def lanzar_lluvia_emojis(emojis_usuario):
+    """Inyecta CSS y HTML para generar una lluvia de emojis en pantalla completa."""
+    emojis_cumple = ["🎂", "🎉", "🎈", "🎁", "🥳", "✨", "🍻", "🎊"]
+    todos_emojis = emojis_usuario + emojis_cumple
+
+    css_animacion = """
+    <style>
+    @keyframes caer {
+        0% { top: -10vh; transform: translateX(0) rotate(0deg); opacity: 1; }
+        100% { top: 110vh; transform: translateX(30px) rotate(360deg); opacity: 0; }
+    }
+    .gota-emoji {
+        position: fixed;
+        z-index: 999999;
+        pointer-events: none;
+        animation: caer linear forwards;
+        user-select: none;
+    }
+    </style>
+    <div id="contenedor-lluvia">
+    """
+    
+    for _ in range(70):
+        emoji = random.choice(todos_emojis)
+        left = random.uniform(0, 100)
+        duracion = random.uniform(2.5, 4.5)
+        delay = random.uniform(0, 1.5)
+        size = random.uniform(1.5, 3.5)
+        css_animacion += f'<div class="gota-emoji" style="left: {left}vw; animation-duration: {duracion}s; animation-delay: {delay}s; font-size: {size}rem;">{emoji}</div>\n'
+    
+    css_animacion += """
+    </div>
+    <script>
+    setTimeout(() => {
+        const el = document.getElementById('contenedor-lluvia');
+        if(el) el.remove();
+    }, 6000);
+    </script>
+    """
+    # Se inyecta en el main loop de la aplicación
+    st.markdown(css_animacion, unsafe_allow_html=True)
 
 # ─────────────────────────────────────────────
-# SESSION STATE — INICIALIZACIÓN
+# SESSION STATE
 # ─────────────────────────────────────────────
 
 def init_session():
     defaults = {
-        "nombre":          None,       # Nombre del invitado autenticado
-        "buffer":          {},         # {item_id: cantidad_local}
-        "extra_texto":     "",
-        "enviado":         False,
-        "admin_ok":        False,
-        "mostrar_exito":   False,
+        "nombre": None,
+        "buffer": {},
+        "extra_texto": "",
+        "enviado": False,
+        "admin_ok": False,
+        "mostrar_exito": False,
+        "emojis_lluvia": [],
     }
     for k, v in defaults.items():
         if k not in st.session_state:
             st.session_state[k] = v
-
 
 # ─────────────────────────────────────────────
 # PANTALLA DE BIENVENIDA
@@ -454,7 +348,7 @@ def pantalla_bienvenida():
         st.markdown("**¿Cómo te llamas?**")
         nombre_input = st.text_input(
             "Nombre",
-            placeholder="Ej: María García",
+            placeholder="Ej: Juan Pérez (Nombre y Apellido)",
             label_visibility="collapsed",
             key="input_nombre",
         )
@@ -465,23 +359,19 @@ def pantalla_bienvenida():
             entrar = st.button("Entrar 🎉", use_container_width=True, type="primary")
             st.markdown("</div>", unsafe_allow_html=True)
 
-    # Enlace discreto al panel admin al pie de la pantalla
     st.markdown("<br><br>", unsafe_allow_html=True)
     st.markdown("""
     <div style="text-align:center;">
         <a href="?admin=1" target="_self"
-           style="font-size:0.75rem; color:#c4b5d4; text-decoration:none;
-                  letter-spacing:0.5px; opacity:0.6;">
+           style="font-size:0.75rem; color:#c4b5d4; text-decoration:none; letter-spacing:0.5px; opacity:0.6;">
             ⚙️ Admin
         </a>
     </div>
     """, unsafe_allow_html=True)
 
-    # Abrir sidebar automáticamente si llega con ?admin=1
     if st.query_params.get("admin") == "1":
         st.markdown("""
         <script>
-        // Forzar apertura del sidebar de Streamlit
         const btn = window.parent.document.querySelector('[data-testid="collapsedControl"]');
         if (btn) btn.click();
         </script>
@@ -490,24 +380,16 @@ def pantalla_bienvenida():
 
     if entrar:
         nombre = nombre_input.strip()
-        if not nombre:
-            st.warning("¡Escribe tu nombre para continuar! 😊")
+        if len(nombre.split()) < 2:
+            st.warning("¡Por favor incluye tu apellido para no confundirte con otro invitado! 😊")
             return
 
-        # Verificar si ya tiene aportes
         aportes_prev = fetch_aportes_invitado(nombre)
         st.session_state["nombre"] = nombre
 
         if aportes_prev:
-            # Inicializar buffer con sus aportes previos
-            st.session_state["buffer"] = {
-                a["item_id"]: a["cantidad"] for a in aportes_prev
-            }
-            # Construir texto descriptivo de sus aportes
-            lista = ", ".join(
-                f"{a['items']['emoji']} {a['items']['nombre']} ×{a['cantidad']}"
-                for a in aportes_prev
-            )
+            st.session_state["buffer"] = {a["item_id"]: a["cantidad"] for a in aportes_prev}
+            lista = ", ".join(f"{a['items']['emoji']} {a['items']['nombre']} ×{a['cantidad']}" for a in aportes_prev)
             st.session_state["reingreso_msg"] = (nombre, lista)
         else:
             st.session_state["buffer"] = {}
@@ -515,66 +397,13 @@ def pantalla_bienvenida():
 
         st.rerun()
 
-
 # ─────────────────────────────────────────────
 # VISTA DE INVITADOS
 # ─────────────────────────────────────────────
 
-@st.fragment
-def renderizar_fila(item):
-    iid       = item["id"]
-    nombre_i  = item["nombre"]
-    emoji_i   = item["emoji"] or "📦"
-    meta      = item["cantidad_meta"]
-    asignado  = item["total_asignado"] or 0
-    faltan    = max(0, meta - asignado)
-    meta_ok   = asignado >= meta
-    unidad_i  = item.get("unidad") or ""
-    ud        = f" {unidad_i}" if unidad_i else ""
-
-    # Leer siempre la última versión del estado
-    mi_qty = st.session_state["buffer"].get(iid, 0)
-
-    # ── Callbacks para velocidad instantánea ──
-    def restar():
-        st.session_state["buffer"][iid] = max(0, st.session_state["buffer"].get(iid, 0) - 1)
-
-    def sumar():
-        st.session_state["buffer"][iid] = st.session_state["buffer"].get(iid, 0) + 1
-
-    def actualizar_input():
-        st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
-
-    with st.container(border=True):
-        col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
-
-        with col_info:
-            st.markdown(f'<div class="item-name">{emoji_i} {nombre_i}</div>', unsafe_allow_html=True)
-            if meta_ok and mi_qty == 0:
-                st.markdown('<div class="item-done">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
-            elif faltan > 0:
-                st.markdown(f'<div class="item-status">Faltan {faltan}{ud} — meta: {meta}{ud}</div>', unsafe_allow_html=True)
-            else:
-                st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
-
-        with col_menos:
-            st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True, on_click=restar)
-
-        with col_qty:
-            st.number_input(
-                "qty", min_value=0, max_value=999, value=mi_qty, step=1,
-                key=f"qty_input_{iid}", label_visibility="collapsed",
-                on_change=actualizar_input
-            )
-
-        with col_mas:
-            deshabilitar_mas = (meta_ok and mi_qty == 0)
-            st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
-    
 def vista_invitados():
     nombre = st.session_state["nombre"]
 
-    # Hero
     st.markdown(f"""
     <div class="hero">
         <span class="hero-emoji">🎊</span>
@@ -583,7 +412,6 @@ def vista_invitados():
     </div>
     """, unsafe_allow_html=True)
 
-    # Alerta de reingreso
     if "reingreso_msg" in st.session_state:
         n, lista = st.session_state["reingreso_msg"]
         st.markdown(f"""
@@ -596,7 +424,6 @@ def vista_invitados():
 
     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
-    # ── Lista de ítems con buffer local ──
     items = fetch_progreso()
 
     if not items:
@@ -620,10 +447,8 @@ def vista_invitados():
             unidad_i  = item.get("unidad") or ""
             ud        = f" {unidad_i}" if unidad_i else ""
 
-            # Leer siempre la última versión del estado
             mi_qty = st.session_state["buffer"].get(iid, 0)
 
-            # Callbacks para velocidad instantánea
             def restar():
                 st.session_state["buffer"][iid] = max(0, st.session_state["buffer"].get(iid, 0) - 1)
 
@@ -659,11 +484,9 @@ def vista_invitados():
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
                     st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
 
-        # El ciclo principal llamando al fragmento
         for item in items:
             renderizar_fila(item)
 
-    # ── Sección de extras ──
     st.markdown("""
     <div class="extras-box">
         <div class="extras-title">💡 ¿Tienes una idea genial?</div>
@@ -683,13 +506,8 @@ def vista_invitados():
 
     st.markdown("<br>", unsafe_allow_html=True)
 
-    # ── Botón de confirmación ──
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-    confirmar = st.button(
-        "🎉 Confirmar mi Aporte",
-        use_container_width=True,
-        type="primary",
-    )
+    confirmar = st.button("🎉 Confirmar mi Aporte", use_container_width=True, type="primary")
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
@@ -699,30 +517,34 @@ def vista_invitados():
         if not alguna_qty and not hay_extra:
             st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
         else:
+            # Recopilar emojis para la lluvia
+            emojis_seleccionados = []
+            for item in items:
+                if st.session_state["buffer"].get(item["id"], 0) > 0:
+                    emojis_seleccionados.append(item["emoji"] or "📦")
+            st.session_state["emojis_lluvia"] = emojis_seleccionados
+
             with st.spinner("Guardando tu aporte... 🎊"):
-                # Escribir aportes en Supabase
                 for iid, qty in st.session_state["buffer"].items():
                     upsert_aporte(nombre, iid, qty)
 
-                # Escribir extra si existe
                 if hay_extra:
                     insertar_extra(nombre, extra_texto.strip())
                     notificar_admin_extra(nombre, extra_texto.strip())
 
-            # Invalidar caché para que todos vean datos frescos
             fetch_progreso.clear()
-
-            import time
             time.sleep(0.6)
 
-            # Limpiar estado y mostrar éxito
             st.session_state["extra_texto"] = ""
             st.session_state.pop("reingreso_msg", None)
             st.session_state["mostrar_exito"] = True
             st.rerun()
 
-    # ── Mensaje de éxito ──
+    # Mostrar alerta de éxito y gatillar animación
     if st.session_state.get("mostrar_exito"):
+        # Llamar a la función que inyecta la animación
+        lanzar_lluvia_emojis(st.session_state.get("emojis_lluvia", []))
+        
         st.markdown("""
         <div class="success-box">
             <h3>🥳 ¡Listo, estás anotado!</h3>
@@ -732,102 +554,12 @@ def vista_invitados():
         """, unsafe_allow_html=True)
         st.session_state["mostrar_exito"] = False
 
-    # Botón para cambiar de nombre
     st.markdown("<br>", unsafe_allow_html=True)
     if st.button("← Cambiar nombre", use_container_width=False):
         st.session_state["nombre"] = None
         st.session_state["buffer"] = {}
         st.session_state.pop("reingreso_msg", None)
         st.rerun()
-                    
-    # ── Sección de extras ──
-    st.markdown("""
-    <div class="extras-box">
-        <div class="extras-title">💡 ¿Tienes una idea genial?</div>
-        <div class="extras-subtitle">Algo que no esté en la lista y quieras traer ✨</div>
-    </div>
-    """, unsafe_allow_html=True)
-
-    extra_texto = st.text_area(
-        "Tu propuesta",
-        placeholder="Ej: una torta de maracuyá, guirnaldas de luces, una sorpresa especial...",
-        label_visibility="collapsed",
-        value=st.session_state["extra_texto"],
-        height=90,
-        key="input_extra",
-    )
-    st.session_state["extra_texto"] = extra_texto
-
-    st.markdown("<br>", unsafe_allow_html=True)
-
-    # ── Botón de confirmación ──
-    # Reconstruir el diccionario con los datos más frescos antes de validar
-    if items:
-        for item in items:
-            iid = item["id"]
-            input_key = f"qty_{iid}"
-            if input_key in st.session_state:
-                st.session_state["buffer"][iid] = st.session_state[input_key]
-
-    alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
-    hay_extra  = bool(st.session_state["extra_texto"].strip())
-
-    if not alguna_qty and not hay_extra:
-        st.caption("Agrega al menos un ítem o una propuesta para confirmar.")
-
-    st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-    confirmar = st.button(
-        "🎉 Confirmar mi Aporte",
-        use_container_width=True,
-        disabled=(not alguna_qty and not hay_extra),
-        type="primary",
-    )
-    st.markdown("</div>", unsafe_allow_html=True)
-
-    if confirmar:
-        with st.spinner("Guardando tu aporte... 🎊"):
-            # ... (tu código de guardado original se mantiene exacto desde aquí hacia abajo)
-            with st.spinner("Guardando tu aporte... 🎊"):
-                # Escribir aportes en Supabase
-                for iid, qty in st.session_state["buffer"].items():
-                    upsert_aporte(nombre, iid, qty)
-                # ... (el resto del guardado sigue igual)
-
-            # Escribir extra si existe
-            if hay_extra:
-                insertar_extra(nombre, extra_texto.strip())
-                notificar_admin_extra(nombre, extra_texto.strip())
-
-            # Invalidar caché para que todos vean datos frescos
-            fetch_progreso.clear()
-
-            time.sleep(0.6)  # pequeño delay para sensación de proceso
-
-        # Limpiar estado y mostrar éxito
-        st.session_state["extra_texto"] = ""
-        st.session_state.pop("reingreso_msg", None)
-        st.session_state["mostrar_exito"] = True
-        st.rerun()
-
-    # ── Mensaje de éxito ──
-    if st.session_state.get("mostrar_exito"):
-        st.markdown("""
-        <div class="success-box">
-            <h3>🥳 ¡Listo, estás anotado!</h3>
-            <p>Gracias por hacer este cumple especial.<br>
-            Puedes volver a modificar tu aporte cuando quieras.</p>
-        </div>
-        """, unsafe_allow_html=True)
-        st.session_state["mostrar_exito"] = False
-
-    # Botón para cambiar de nombre
-    st.markdown("<br>", unsafe_allow_html=True)
-    if st.button("← Cambiar nombre", use_container_width=False):
-        st.session_state["nombre"] = None
-        st.session_state["buffer"] = {}
-        st.session_state.pop("reingreso_msg", None)
-        st.rerun()
-
 
 # ─────────────────────────────────────────────
 # VISTA DE ADMINISTRADOR
@@ -838,9 +570,11 @@ def sidebar_admin():
         st.markdown("### 👑 Panel Admin")
 
         if not st.session_state["admin_ok"]:
+            # Usar la clave cargada desde secrets
+            admin_pw_correcta = st.secrets.get("ADMIN_PASSWORD", "l4luzesco0l")
             pw = st.text_input("Contraseña", type="password", key="admin_pw")
             if st.button("Acceder", use_container_width=True):
-                if pw == ADMIN_PASSWORD:
+                if pw == admin_pw_correcta:
                     st.session_state["admin_ok"] = True
                     st.rerun()
                 else:
@@ -851,7 +585,6 @@ def sidebar_admin():
                 st.session_state["admin_ok"] = False
                 st.rerun()
 
-
 def vista_admin():
     st.markdown("""
     <div class="hero">
@@ -861,20 +594,22 @@ def vista_admin():
     </div>
     """, unsafe_allow_html=True)
 
-    # ── Tabs ──
     tab_dashboard, tab_aportes, tab_extras, tab_agregar = st.tabs([
         "📊 Dashboard", "📋 Aportes", "💡 Extras", "➕ Nuevo ítem"
     ])
 
-    # ── TAB 1: Dashboard ──
     with tab_dashboard:
         st.markdown("#### Progreso por ítem")
+        
+        # Botón sutil para refrescar la caché manualmente si es necesario
+        if st.button("🔄 Actualizar Datos", use_container_width=True):
+            fetch_progreso.clear()
+            st.rerun()
 
         items = fetch_progreso()
         if not items:
             st.info("Sin ítems aún. Agrégalos en la pestaña ➕.")
         else:
-            # Métricas globales
             total_meta     = sum(i["cantidad_meta"]   for i in items)
             total_asignado = sum(i["total_asignado"]  for i in items)
             items_ok       = sum(1 for i in items if i["total_asignado"] >= i["cantidad_meta"])
@@ -910,7 +645,6 @@ def vista_admin():
 
                 st.markdown("")
 
-    # ── TAB 2: Aportes desglosados ──
     with tab_aportes:
         st.markdown("#### ¿Quién lleva qué?")
 
@@ -918,7 +652,6 @@ def vista_admin():
         if not aportes:
             st.info("Nadie ha confirmado aportes todavía.")
         else:
-            # Construir tabla
             rows = []
             for a in aportes:
                 unidad_a = a["items"].get("unidad") or ""
@@ -938,12 +671,11 @@ def vista_admin():
                 column_config={
                     "Invitado": st.column_config.TextColumn("👤 Invitado"),
                     "Ítem":     st.column_config.TextColumn("🛒 Ítem"),
-                    "Cantidad": st.column_config.NumberColumn("🔢 Cant.", format="%d"),
+                    "Cantidad": st.column_config.TextColumn("🔢 Cant."),
                 },
             )
             st.caption(f"Total de registros: {len(rows)}")
 
-    # ── TAB 3: Extras ──
     with tab_extras:
         st.markdown("#### 💡 Propuestas de los invitados")
 
@@ -953,12 +685,9 @@ def vista_admin():
         else:
             for ex in extras:
                 with st.container():
-                    st.markdown(
-                        f"**{ex['nombre_invitado']}** — {ex['descripcion']}"
-                    )
+                    st.markdown(f"**{ex['nombre_invitado']}** — {ex['descripcion']}")
                     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
-    # ── TAB 4: Agregar ítem ──
     with tab_agregar:
         st.markdown("#### ➕ Nuevo ítem para la lista")
 
@@ -983,18 +712,12 @@ def vista_admin():
 
         if submitted:
             if nombre_nuevo.strip():
-                insertar_item(
-                    nombre_nuevo.strip(),
-                    int(meta_nueva),
-                    emoji_nuevo.strip(),
-                    unidad_nueva.strip(),
-                )
+                insertar_item(nombre_nuevo.strip(), int(meta_nueva), emoji_nuevo.strip(), unidad_nueva.strip())
                 fetch_progreso.clear()
                 st.success(f"¡Ítem '{nombre_nuevo}' agregado exitosamente! 🎊")
                 st.rerun()
             else:
                 st.warning("El nombre del ítem no puede estar vacío.")
-
 
 # ─────────────────────────────────────────────
 # MAIN
@@ -1005,86 +728,23 @@ def main():
     init_session()
     sidebar_admin()
 
-    # Ruta de admin
     if st.session_state["admin_ok"]:
         vista_admin()
         return
 
-    # Ruta de invitado
     if st.session_state["nombre"] is None:
         pantalla_bienvenida()
     else:
         vista_invitados()
 
-
 if __name__ == "__main__":
     main()
 
-
 # ══════════════════════════════════════════════════════════════════
-#  SQL PARA SUPABASE — PEGAR EN SQL EDITOR → RUN
+#  SQL PARA SUPABASE — CORRECCIONES Y POLÍTICAS
 # ══════════════════════════════════════════════════════════════════
+# Asegúrate de ejecutar esto en tu Supabase si no lo hiciste antes:
 #
-# -- 1. Tabla de ítems
-# CREATE TABLE IF NOT EXISTS items (
-#   id             SERIAL PRIMARY KEY,
-#   nombre         TEXT    NOT NULL,
-#   cantidad_meta  INT     NOT NULL DEFAULT 1,
-#   emoji          TEXT    DEFAULT '📦',
-#   unidad         TEXT    DEFAULT ''   -- Ej: 'litros', 'bolsas', 'unidades', 'gramos'
-# );
-#
-# -- Si ya creaste la tabla sin la columna unidad, agrégala con:
-# ALTER TABLE items ADD COLUMN IF NOT EXISTS unidad TEXT DEFAULT '';
-#
-# -- 2. Tabla de aportes (un registro por invitado + ítem)
-# CREATE TABLE IF NOT EXISTS aportes (
-#   id                SERIAL PRIMARY KEY,
-#   nombre_invitado   TEXT NOT NULL,
-#   item_id           INT  NOT NULL REFERENCES items(id) ON DELETE CASCADE,
-#   cantidad          INT  NOT NULL DEFAULT 0,
-#   UNIQUE (nombre_invitado, item_id)   -- necesario para el upsert
-# );
-#
-# -- 3. Tabla de extras
-# CREATE TABLE IF NOT EXISTS extras (
-#   id               SERIAL PRIMARY KEY,
-#   nombre_invitado  TEXT NOT NULL,
-#   descripcion      TEXT NOT NULL,
-#   creado_en        TIMESTAMPTZ DEFAULT NOW()
-# );
-#
-# -- 4. Vista de progreso (se actualiza en tiempo real)
-# CREATE OR REPLACE VIEW vista_progreso_items AS
-# SELECT
-#   i.id,
-#   i.nombre,
-#   i.cantidad_meta,
-#   i.emoji,
-#   i.unidad,
-#   COALESCE(SUM(a.cantidad), 0) AS total_asignado
-# FROM items i
-# LEFT JOIN aportes a ON a.item_id = i.id
-# GROUP BY i.id, i.nombre, i.cantidad_meta, i.emoji, i.unidad
-# ORDER BY i.id;
-#
-# -- 5. Habilitar Row Level Security + políticas públicas de lectura/escritura
-# --    (para la demo sin autenticación; en producción ajusta según necesidad)
-# ALTER TABLE items  ENABLE ROW LEVEL SECURITY;
-# ALTER TABLE aportes ENABLE ROW LEVEL SECURITY;
-# ALTER TABLE extras  ENABLE ROW LEVEL SECURITY;
-#
-# CREATE POLICY "public_read_items"   ON items   FOR SELECT USING (true);
-# CREATE POLICY "public_read_aportes" ON aportes FOR SELECT USING (true);
-# CREATE POLICY "public_write_aportes" ON aportes FOR ALL    USING (true) WITH CHECK (true);
-# CREATE POLICY "public_write_extras"  ON extras  FOR ALL    USING (true) WITH CHECK (true);
-# -- La vista hereda los permisos de las tablas base, no requiere política propia.
-# -- Si usas anon key, asegúrate de que "anon" tenga SELECT en la vista:
-# GRANT SELECT ON vista_progreso_items TO anon;
-# GRANT ALL    ON aportes TO anon;
-# GRANT ALL    ON extras  TO anon;
-# GRANT SELECT ON items   TO anon;
-# GRANT USAGE, SELECT ON SEQUENCE aportes_id_seq TO anon;
-# GRANT USAGE, SELECT ON SEQUENCE extras_id_seq  TO anon;
-#
+# CREATE POLICY "public_insert_items" ON items FOR INSERT WITH CHECK (true);
+# 
 # ══════════════════════════════════════════════════════════════════
