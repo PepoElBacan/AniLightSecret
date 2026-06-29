@@ -613,7 +613,7 @@ def vista_invitados():
                 )
 
         # ── Implementación de la cuadrícula de 3 columnas ──
-        columnas_grid = st.columns(3)
+        columnas_grid = st.columns(2)
         
         # Iteramos sobre los ítems
         for idx, item in enumerate(items):
