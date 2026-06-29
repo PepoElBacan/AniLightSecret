@@ -19,7 +19,7 @@ st.set_page_config(
     initial_sidebar_state="collapsed",
 )
 
-ADMIN_PASSWORD = "admin123"
+ADMIN_PASSWORD = "l4luzesminovi4"
 
 
 @st.cache_resource
