@@ -520,6 +520,57 @@ def pantalla_bienvenida():
 # VISTA DE INVITADOS
 # ─────────────────────────────────────────────
 
+@st.fragment
+def renderizar_fila(item):
+    iid       = item["id"]
+    nombre_i  = item["nombre"]
+    emoji_i   = item["emoji"] or "📦"
+    meta      = item["cantidad_meta"]
+    asignado  = item["total_asignado"] or 0
+    faltan    = max(0, meta - asignado)
+    meta_ok   = asignado >= meta
+    unidad_i  = item.get("unidad") or ""
+    ud        = f" {unidad_i}" if unidad_i else ""
+
+    # Leer siempre la última versión del estado
+    mi_qty = st.session_state["buffer"].get(iid, 0)
+
+    # ── Callbacks para velocidad instantánea ──
+    def restar():
+        st.session_state["buffer"][iid] = max(0, st.session_state["buffer"].get(iid, 0) - 1)
+
+    def sumar():
+        st.session_state["buffer"][iid] = st.session_state["buffer"].get(iid, 0) + 1
+
+    def actualizar_input():
+        st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
+
+    with st.container(border=True):
+        col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
+
+        with col_info:
+            st.markdown(f'<div class="item-name">{emoji_i} {nombre_i}</div>', unsafe_allow_html=True)
+            if meta_ok and mi_qty == 0:
+                st.markdown('<div class="item-done">✅ ¡Meta cumplida!</div>', unsafe_allow_html=True)
+            elif faltan > 0:
+                st.markdown(f'<div class="item-status">Faltan {faltan}{ud} — meta: {meta}{ud}</div>', unsafe_allow_html=True)
+            else:
+                st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
+
+        with col_menos:
+            st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True, on_click=restar)
+
+        with col_qty:
+            st.number_input(
+                "qty", min_value=0, max_value=999, value=mi_qty, step=1,
+                key=f"qty_input_{iid}", label_visibility="collapsed",
+                on_change=actualizar_input
+            )
+
+        with col_mas:
+            deshabilitar_mas = (meta_ok and mi_qty == 0)
+            st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True, on_click=sumar)
+    
 def vista_invitados():
     nombre = st.session_state["nombre"]
 
