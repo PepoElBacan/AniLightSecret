@@ -547,11 +547,16 @@ def vista_invitados():
 
             mi_qty = st.session_state["buffer"].get(iid, 0)
 
+            # Callbacks corregidos para velocidad instantánea y sincronización
             def restar():
-                st.session_state["buffer"][iid] = max(0, st.session_state["buffer"].get(iid, 0) - 1)
+                nuevo_val = max(0, st.session_state["buffer"].get(iid, 0) - 1)
+                st.session_state["buffer"][iid] = nuevo_val
+                st.session_state[f"qty_input_{iid}"] = nuevo_val
 
             def sumar():
-                st.session_state["buffer"][iid] = st.session_state["buffer"].get(iid, 0) + 1
+                nuevo_val = st.session_state["buffer"].get(iid, 0) + 1
+                st.session_state["buffer"][iid] = nuevo_val
+                st.session_state[f"qty_input_{iid}"] = nuevo_val
 
             def actualizar_input():
                 st.session_state["buffer"][iid] = st.session_state[f"qty_input_{iid}"]
