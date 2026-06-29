@@ -599,10 +599,18 @@ def vista_invitados():
                     st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), on_click=restar, args=(input_key,), use_container_width=True)
 
                 with col_qty:
-                    st.number_input(
-                        "qty", min_value=0, max_value=999, step=1,
-                        key=input_key, label_visibility="collapsed"
+                    nuevo_val = st.number_input(
+                        "qty", 
+                        min_value=0, 
+                        max_value=999, 
+                        value=mi_qty, 
+                        step=1,
+                        key=f"qty_input_{iid}",  # <-- Eliminamos _{mi_qty}
+                        label_visibility="collapsed"
                     )
+                    if nuevo_val != mi_qty:
+                        st.session_state["buffer"][iid] = nuevo_val
+                        st.rerun(scope="fragment")
 
                 with col_mas:
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
