@@ -53,8 +53,7 @@ def inject_styles():
     }
 
     /* Ocultar header/footer de Streamlit */
-    #MainMenu, footer, { visibility: hidden; }
-    header { background: transparent !important; }
+    #MainMenu, footer, header { visibility: hidden; }
 
     /* ── Hero header ── */
     .hero {
@@ -81,18 +80,18 @@ def inject_styles():
         font-weight: 500;
     }
 
-    /* ── Tarjeta de ítem ── */
-    .item-card {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 1rem 1.2rem;
-        margin-bottom: 0.75rem;
-        border: 1.5px solid #f0e8ff;
-        box-shadow: 0 2px 8px rgba(100, 60, 180, 0.06);
-        transition: box-shadow 0.2s;
+    /* ── Tarjeta de ítem — usando st.container(border=True) ── */
+    /* Streamlit renderiza border containers como div[data-testid="stVerticalBlockBorderWrapper"] */
+    div[data-testid="stVerticalBlockBorderWrapper"] {
+        border-radius: 16px !important;
+        border: 1.5px solid #f0e8ff !important;
+        box-shadow: 0 2px 8px rgba(100, 60, 180, 0.06) !important;
+        background: #ffffff !important;
+        margin-bottom: 0.6rem !important;
+        transition: box-shadow 0.2s !important;
     }
-    .item-card:hover {
-        box-shadow: 0 4px 16px rgba(100, 60, 180, 0.12);
+    div[data-testid="stVerticalBlockBorderWrapper"]:hover {
+        box-shadow: 0 4px 16px rgba(100, 60, 180, 0.12) !important;
     }
     .item-name {
         font-weight: 700;
@@ -510,9 +509,7 @@ def vista_invitados():
             unidad_i  = item.get("unidad") or ""
             ud        = f" {unidad_i}" if unidad_i else ""
 
-            with st.container():
-                st.markdown(f'<div class="item-card">', unsafe_allow_html=True)
-
+            with st.container(border=True):
                 # Fila: emoji + nombre + estado
                 col_info, col_qty, col_menos, col_mas = st.columns([4, 1.5, 1, 1])
 
@@ -536,14 +533,11 @@ def vista_invitados():
                         st.rerun()
 
                 with col_mas:
-                    # Deshabilitar + solo si la meta está cubierta Y yo no llevo nada todavía
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
                     if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas):
                         buffer[iid] = mi_qty + 1
                         st.session_state["buffer"] = buffer
                         st.rerun()
-
-                st.markdown("</div>", unsafe_allow_html=True)
 
     # ── Sección de extras ──
     st.markdown("""
