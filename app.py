@@ -557,8 +557,15 @@ def vista_invitados():
 
         buffer: dict = st.session_state["buffer"]
 
-        @st.fragment
-        def renderizar_fila(item):
+        # 1. Definir funciones súper rápidas (Callbacks)
+        def sumar(k):
+            st.session_state[k] += 1
+
+        def restar(k):
+            st.session_state[k] = max(0, st.session_state[k] - 1)
+
+        # 2. Renderizar la lista
+        for item in items:
             iid       = item["id"]
             nombre_i  = item["nombre"]
             emoji_i   = item["emoji"] or "📦"
@@ -569,8 +576,12 @@ def vista_invitados():
             unidad_i  = item.get("unidad") or ""
             ud        = f" {unidad_i}" if unidad_i else ""
 
-            # Leer siempre la última versión del estado
-            mi_qty = st.session_state["buffer"].get(iid, 0)
+            # Conectar el input directamente al buffer sin demoras
+            input_key = f"qty_{iid}"
+            if input_key not in st.session_state:
+                st.session_state[input_key] = st.session_state["buffer"].get(iid, 0)
+            
+            mi_qty = st.session_state[input_key]
 
             with st.container(border=True):
                 col_info, col_menos, col_qty, col_mas = st.columns([4, 0.85, 1.3, 0.85])
@@ -585,29 +596,18 @@ def vista_invitados():
                         st.markdown(f'<div class="item-status">Meta: {meta}{ud} (¡cubierta!)</div>', unsafe_allow_html=True)
 
                 with col_menos:
-                    if st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), use_container_width=True):
-                        st.session_state["buffer"][iid] = max(0, mi_qty - 1)
-                        st.rerun(scope="fragment")
+                    st.button("－", key=f"menos_{iid}", disabled=(mi_qty <= 0), on_click=restar, args=(input_key,), use_container_width=True)
 
                 with col_qty:
-                    nuevo_val = st.number_input(
-                        "qty", min_value=0, max_value=999, value=mi_qty, step=1,
-                        key=f"qty_input_{iid}_{mi_qty}", label_visibility="collapsed"
+                    st.number_input(
+                        "qty", min_value=0, max_value=999, step=1,
+                        key=input_key, label_visibility="collapsed"
                     )
-                    if nuevo_val != mi_qty:
-                        st.session_state["buffer"][iid] = nuevo_val
-                        st.rerun(scope="fragment")
 
                 with col_mas:
                     deshabilitar_mas = (meta_ok and mi_qty == 0)
-                    if st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, use_container_width=True):
-                        st.session_state["buffer"][iid] = mi_qty + 1
-                        st.rerun(scope="fragment")
-
-        # El ciclo principal ahora queda súper limpio llamando al fragmento
-        for item in items:
-            renderizar_fila(item)
-
+                    st.button("＋", key=f"mas_{iid}", disabled=deshabilitar_mas, on_click=sumar, args=(input_key,), use_container_width=True)
+                    
     # ── Sección de extras ──
     st.markdown("""
     <div class="extras-box">
@@ -629,23 +629,32 @@ def vista_invitados():
     st.markdown("<br>", unsafe_allow_html=True)
 
     # ── Botón de confirmación ──
-    # ── Botón de confirmación ──
+    # Reconstruir el diccionario con los datos más frescos antes de validar
+    if items:
+        for item in items:
+            iid = item["id"]
+            input_key = f"qty_{iid}"
+            if input_key in st.session_state:
+                st.session_state["buffer"][iid] = st.session_state[input_key]
+
+    alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
+    hay_extra  = bool(st.session_state["extra_texto"].strip())
+
+    if not alguna_qty and not hay_extra:
+        st.caption("Agrega al menos un ítem o una propuesta para confirmar.")
+
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
     confirmar = st.button(
         "🎉 Confirmar mi Aporte",
         use_container_width=True,
+        disabled=(not alguna_qty and not hay_extra),
         type="primary",
     )
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
-        # Validamos aquí para no depender del refresco de la página
-        alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
-        hay_extra  = bool(st.session_state["extra_texto"].strip())
-        
-        if not alguna_qty and not hay_extra:
-            st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
-        else:
+        with st.spinner("Guardando tu aporte... 🎊"):
+            # ... (tu código de guardado original se mantiene exacto desde aquí hacia abajo)
             with st.spinner("Guardando tu aporte... 🎊"):
                 # Escribir aportes en Supabase
                 for iid, qty in st.session_state["buffer"].items():
