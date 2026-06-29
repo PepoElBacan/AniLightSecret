@@ -501,7 +501,7 @@ def pantalla_bienvenida():
 # ─────────────────────────────────────────────
 
 def inyectar_animacion_clic():
-    components.html("""
+    st.html("""
     <script>
     try {
         const doc = window.parent.document;
@@ -541,10 +541,10 @@ def inyectar_animacion_clic():
             doc.body.appendChild(flag);
         }
     } catch (err) {
-        console.log("No se pudo inyectar la animación por restricciones del iframe.");
+        console.log("No se pudo inyectar la animación.");
     }
     </script>
-    """, height=0, width=0)
+    """)
     
 def vista_invitados():
     nombre = st.session_state["nombre"]
