@@ -199,35 +199,6 @@ def inject_styles():
         transform: translateY(-1px) !important;
     }
 
-    /* ── Grid de ítems 2 columnas — funciona dentro del iframe de Streamlit ── */
-    /*
-       El media query no funciona en móvil porque la app vive dentro de un iframe.
-       Solución: CSS grid con min() para que cada celda nunca baje de un tamaño usable,
-       y JS que reasigna los anchos de las columnas de Streamlit al ancho real del contenedor.
-    */
-    .item-grid-wrapper {
-        width: 100% !important;
-    }
-    /* Cada stHorizontalBlock dentro del wrapper: grid de 2 columnas reales */
-    .item-grid-wrapper > div > div > div[data-testid="stHorizontalBlock"] {
-        display: grid !important;
-        grid-template-columns: 1fr 1fr !important;
-        gap: 0.5rem !important;
-        width: 100% !important;
-        flex-wrap: nowrap !important;
-    }
-    /* Cada celda del grid ocupa su espacio completo y no encoge */
-    .item-grid-wrapper > div > div > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
-        width: 100% !important;
-        min-width: 0 !important;
-        flex: none !important;
-        max-width: 100% !important;
-    }
-    /* Las tarjetas dentro llenan la celda en altura */
-    .item-grid-wrapper div[data-testid="stVerticalBlockBorderWrapper"] {
-        height: 100% !important;
-    }
-
     /* ── Alerta de reingreso ── */
     .reingreso-alert {
         background: linear-gradient(135deg, #fefce8, #fef9c3);
@@ -580,10 +551,70 @@ def vista_invitados():
 
         inyectar_animacion_clic()
 
-        # ── Grid 2 columnas responsive ──
-        # Envolvemos en un div con clase para poder aplicar CSS grid encima
-        st.markdown('<div class="item-grid-wrapper">', unsafe_allow_html=True)
+        # ── Inyectar CSS grid directamente en el <head> del iframe ──
+        # st.html escribe dentro del documento del iframe (no del padre),
+        # así que los estilos se aplican sin problemas cross-origin en Safari/Chrome móvil.
+        st.html("""
+        <style>
+        /* Contenedor del grid */
+        .items-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 0.55rem;
+            width: 100%;
+            margin-bottom: 0.5rem;
+        }
+        /* Cada celda del grid */
+        .items-grid .grid-cell {
+            min-width: 0;
+        }
+        /* Las tarjetas de Streamlit dentro del grid llenan el ancho */
+        .items-grid div[data-testid="stVerticalBlockBorderWrapper"] {
+            height: 100%;
+            margin-bottom: 0 !important;
+        }
+        /* Alinear el number_input al centro dentro de la tarjeta */
+        .items-grid div[data-testid="stNumberInput"] {
+            margin: 0 auto !important;
+            width: 92% !important;
+        }
+        </style>
+        <div class="items-grid" id="items-grid-root"></div>
+        <script>
+        // Mover cada tarjeta Streamlit al grid en cuanto existan en el DOM
+        (function montarGrid() {
+            const grid = document.getElementById('items-grid-root');
+            if (!grid) return;
 
+            function colocarTarjetas() {
+                // Las tarjetas son los stVerticalBlock que están como hermanos del grid
+                const bloque = grid.parentElement;
+                if (!bloque) return;
+                // Buscar stVerticalBlockBorderWrapper hermanos
+                const tarjetas = bloque.querySelectorAll(
+                    ':scope > div > [data-testid="stVerticalBlock"] > ' +
+                    'div[data-testid="stVerticalBlockBorderWrapper"]'
+                );
+                if (tarjetas.length === 0) return;
+                grid.innerHTML = '';
+                tarjetas.forEach(function(t) {
+                    const cell = document.createElement('div');
+                    cell.className = 'grid-cell';
+                    cell.appendChild(t.cloneNode(true));
+                    grid.appendChild(cell);
+                });
+            }
+
+            const obs = new MutationObserver(colocarTarjetas);
+            obs.observe(document.body, { childList: true, subtree: true });
+            colocarTarjetas();
+            setTimeout(colocarTarjetas, 400);
+        })();
+        </script>
+        """)
+
+        # Renderizar cada ítem en su propio @st.fragment (1 columna en Streamlit,
+        # el grid visual lo maneja el CSS de arriba)
         @st.fragment
         def renderizar_item(item):
             iid      = item["id"]
@@ -597,20 +628,17 @@ def vista_invitados():
             mi_qty   = st.session_state["buffer"].get(iid, 0)
 
             with st.container(border=True):
-                # Emoji grande
                 st.markdown(
                     f'<div style="text-align:center;font-size:2.6rem;'
                     f'line-height:1;margin-bottom:0.3rem;">{emoji_i}</div>',
                     unsafe_allow_html=True,
                 )
-                # Nombre
                 st.markdown(
                     f'<div style="text-align:center;font-weight:700;'
                     f'color:#2d1b4e;font-size:1rem;margin-bottom:0.2rem;">'
                     f'{item["nombre"]}</div>',
                     unsafe_allow_html=True,
                 )
-                # Estado
                 if meta_ok and mi_qty == 0:
                     st.markdown(
                         '<div style="text-align:center;font-size:0.8rem;'
@@ -625,7 +653,6 @@ def vista_invitados():
                         f'Faltan {faltan}{ud}</div>',
                         unsafe_allow_html=True,
                     )
-                # Number input con botones nativos (son los únicos que no rompen el estado)
                 nuevo_val = st.number_input(
                     "Cantidad",
                     min_value=0,
@@ -640,16 +667,10 @@ def vista_invitados():
                     st.session_state["buffer"][iid] = nuevo_val
                     st.rerun()
 
-        # Distribuir ítems en pares de columnas
-        for i in range(0, len(items), 2):
-            cols = st.columns(2, gap="small")
-            with cols[0]:
-                renderizar_item(items[i])
-            if i + 1 < len(items):
-                with cols[1]:
-                    renderizar_item(items[i + 1])
-
-        st.markdown('</div>', unsafe_allow_html=True)  # cierra item-grid-wrapper
+        # Renderizar todos los ítems secuencialmente;
+        # el CSS grid los reorganiza visualmente en 2 columnas
+        for item in items:
+            renderizar_item(item)
 
     # ── Sección extras ──
     st.markdown("""
