@@ -667,7 +667,7 @@ def vista_invitados():
             }}
             .card:hover {{ box-shadow: 0 4px 16px rgba(100,60,180,0.13); }}
 
-            .card-emoji  {{ font-size: 3.0rem; line-height: 1; margin-bottom: 6px}}
+            .card-emoji  {{ font-size: 4.0rem; line-height: 1; margin-bottom: 6px}}
             .card-nombre {{
                 font-weight: 700; font-size: 0.90rem;
                 color: #2d1b4e; text-align: center;
