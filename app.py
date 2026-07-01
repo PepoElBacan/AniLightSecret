@@ -109,8 +109,8 @@ def inject_styles():
         transition: all 0.2s ease !important;
     }
     .stButton > button:hover {
-        border-color: #5C6E4F !important;
-        color: #5C6E4F !important;
+        border-color: #401D06 !important;
+        color: #401D06 !important;
     }
     .stButton > button:active {
         transform: scale(0.97) !important;
@@ -118,7 +118,7 @@ def inject_styles():
 
     /* Botón confirmar (Verde Musgo) */
     .confirm-btn > button {
-        background-color: #5C6E4F !important;
+        background-color: #401D06 !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
@@ -140,7 +140,7 @@ def inject_styles():
         padding: 1rem 1.2rem;
         margin-bottom: 1.5rem;
     }
-    .reingreso-alert b { color: #5C4326; }
+    .reingreso-alert b { color: #401D06; }
     .reingreso-alert p { color: #7A6F62; margin: 0; font-size: 0.95rem; margin-top: 4px;}
 
     .extras-box {
@@ -170,7 +170,7 @@ def inject_styles():
         text-align: center;
     }
     .success-box h3 { color: #3C4A31; margin: 0; font-size: 1.2rem; }
-    .success-box p  { color: #5C6E4F; margin: 0.5rem 0 0; font-size: 0.95rem; }
+    .success-box p  { color: #401D06; margin: 0.5rem 0 0; font-size: 0.95rem; }
 
     /* ── Divider ── */
     .divider {
@@ -206,7 +206,7 @@ def inject_styles():
     }
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #5C6E4F !important;
+        border-color: #401D06 !important;
         box-shadow: 0 0 0 2px rgba(92, 110, 79, 0.1) !important;
     }
 
@@ -215,7 +215,7 @@ def inject_styles():
     [data-testid="stSidebar"] * { color: #E6E2D6 !important; }
     [data-testid="stSidebar"] .stTextInput > div > div > input {
         background: #3E362E !important;
-        border-color: #5C4D40 !important;
+        border-color: #401D06 !important;
         color: white !important;
     }
     </style>
@@ -499,7 +499,7 @@ def vista_invitados():
                 font-size: 0.75rem; color: #7A6F62;
                 text-align: center; margin-bottom: 8px;
             }}
-            .estado.done {{ color: #5C6E4F; font-weight: 600; }}
+            .estado.done {{ color: #401D06; font-weight: 600; }}
 
             .card-controls {{
                 display: flex; align-items: center;
@@ -510,13 +510,13 @@ def vista_invitados():
                 border-radius: 6px;
                 background: #F9F6F0;
                 border: 1px solid #D6CFC4;
-                color: #5C6E4F;
+                color: #401D06;
                 font-size: 1.1rem; font-weight: 600;
                 cursor: pointer;
                 display: flex; align-items: center; justify-content: center;
                 transition: all 0.2s ease;
             }}
-            .btn-ctrl:hover:not(:disabled)  {{ background: #EAECE6; border-color: #5C6E4F; }}
+            .btn-ctrl:hover:not(:disabled)  {{ background: #EAECE6; border-color: #401D06; }}
             .btn-ctrl:disabled {{ opacity: 0.3; cursor: default; }}
 
             .qty-input {{
