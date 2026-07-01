@@ -558,36 +558,15 @@ def vista_invitados():
 
         buffer = st.session_state["buffer"]
 
-        # 1. Renderizar los number_inputs de Streamlit completamente ocultos.
-        #    El truco: los envolvemos en un st.container al que le asignamos
-        #    un key, y luego lo ocultamos apuntando al elemento padre con CSS
-        #    usando el atributo data-testid y nth-child conocido.
-        #    Forma más robusta: ocultar por height=0 + overflow hidden en el
-        #    bloque completo con un div marcador visible en el DOM de Streamlit.
-        st.markdown("""
-        <style>
-        /* Ocultar el bloque de inputs numéricos:
-           buscamos el div que sigue inmediatamente al marcador #inputs-ocultos-marker */
-        #inputs-ocultos-marker + div,
-        #inputs-ocultos-marker ~ div [data-testid="stNumberInput"],
-        #inputs-ocultos-marker ~ div [data-testid="stNumberInput"] * {
-            display: none !important;
-        }
-        /* Alternativa por altura cero para el contenedor completo */
-        div:has(> #inputs-ocultos-marker) {
-            height: 0 !important;
-            overflow: hidden !important;
-            margin: 0 !important;
-            padding: 0 !important;
-        }
-        </style>
-        <div id="inputs-ocultos-marker"></div>
-        """, unsafe_allow_html=True)
-
+        # 1. Renderizar number_inputs de Streamlit en contenedores st.empty()
+        #    st.empty() ocupa exactamente 0px de altura en el DOM — sin espacio en blanco.
+        placeholders = {}
         for item in items:
-            iid    = item["id"]
+            iid = item["id"]
+            ph  = st.empty()
+            placeholders[iid] = ph
             mi_qty = buffer.get(iid, 0)
-            nuevo  = st.number_input(
+            nuevo  = ph.number_input(
                 f"qty_{iid}",
                 min_value=0, max_value=999,
                 value=mi_qty, step=1,
@@ -598,8 +577,26 @@ def vista_invitados():
                 st.session_state["buffer"][iid] = nuevo
                 st.rerun()
 
-        # Separador visual para que el CSS :has() funcione
-        st.markdown('<div id="inputs-fin-marker"></div>', unsafe_allow_html=True)
+        # CSS para colapsar los st.empty wrappers a cero altura real
+        st.markdown("""
+        <style>
+        /* Colapsar todos los stNumberInput y sus wrappers a altura 0 */
+        [data-testid="stNumberInput"] {
+            position: absolute !important;
+            opacity: 0 !important;
+            pointer-events: none !important;
+            height: 0 !important;
+            overflow: hidden !important;
+        }
+        /* También el div padre que Streamlit envuelve alrededor del empty */
+        [data-testid="stVerticalBlock"] > div:has([data-testid="stNumberInput"]) {
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
+        </style>
+        """, unsafe_allow_html=True)
 
         # 2. Construir el HTML puro del grid
         tarjetas_html = ""
@@ -615,10 +612,10 @@ def vista_invitados():
             mi_qty   = buffer.get(iid, 0)
 
             if meta_ok and mi_qty == 0:
-                estado_html = '<div class="estado done">✅ ¡Meta cumplida!</div>'
+                estado_html   = '<div class="estado done">✅ ¡Meta cumplida!</div>'
                 disabled_plus = "disabled"
             else:
-                estado_html = f'<div class="estado">{faltan}{ud} disponibles</div>'
+                estado_html   = f'<div class="estado">{faltan}{ud} disponibles</div>'
                 disabled_plus = ""
 
             disabled_minus = "disabled" if mi_qty <= 0 else ""
@@ -630,8 +627,10 @@ def vista_invitados():
                 {estado_html}
                 <div class="card-controls">
                     <button class="btn-ctrl minus" data-iid="{iid}" {disabled_minus}>－</button>
-                    <span class="qty-display" id="qty-{iid}">{mi_qty}</span>
-                    <button class="btn-ctrl plus"  data-iid="{iid}" {disabled_plus}>＋</button>
+                    <input class="qty-input" id="qty-{iid}" type="number"
+                           value="{mi_qty}" min="0" max="999"
+                           data-iid="{iid}" inputmode="numeric">
+                    <button class="btn-ctrl plus" data-iid="{iid}" {disabled_plus}>＋</button>
                 </div>
             </div>
             """
@@ -693,19 +692,33 @@ def vista_invitados():
                 cursor: pointer;
                 display: flex; align-items: center; justify-content: center;
                 transition: background 0.15s;
+                flex-shrink: 0;
                 -webkit-tap-highlight-color: transparent;
             }}
             .btn-ctrl:hover:not(:disabled)  {{ background: #ede0ff; border-color: #a78bfa; }}
             .btn-ctrl:active:not(:disabled) {{ transform: scale(0.92); }}
             .btn-ctrl:disabled {{ opacity: 0.3; cursor: default; }}
 
-            .qty-display {{
-                min-width: 32px; text-align: center;
-                font-size: 1.1rem; font-weight: 800;
+            /* Input de cantidad editable */
+            .qty-input {{
+                width: 52px;
+                height: 36px;
+                text-align: center;
+                font-size: 1.05rem;
+                font-weight: 800;
                 color: #6d28d9;
                 background: #f3eeff;
-                border-radius: 8px;
-                padding: 2px 6px;
+                border: 1.5px solid #ddd6fe;
+                border-radius: 10px;
+                outline: none;
+                /* Ocultar flechas nativas */
+                -moz-appearance: textfield;
+            }}
+            .qty-input::-webkit-outer-spin-button,
+            .qty-input::-webkit-inner-spin-button {{ -webkit-appearance: none; margin: 0; }}
+            .qty-input:focus {{
+                border-color: #7c3aed;
+                box-shadow: 0 0 0 3px rgba(124,58,237,0.15);
             }}
         </style>
         </head>
@@ -714,87 +727,71 @@ def vista_invitados():
             {tarjetas_html}
         </div>
         <script>
-        // Ocultar los number_input de Streamlit en el documento padre
-        (function ocultarInputs() {{
-            function hide() {{
-                try {{
-                    var doc = window.parent.document;
-                    var marker = doc.getElementById('inputs-ocultos-marker');
-                    if (!marker) return;
-                    // Ocultar todos los stNumberInput que vienen después del marker
-                    var all = doc.querySelectorAll('[data-testid="stNumberInput"]');
-                    all.forEach(function(el) {{ el.style.display = 'none'; }});
-                    // También ocultar sus contenedores padre directos
-                    all.forEach(function(el) {{
-                        var parent = el.parentElement;
-                        if (parent) parent.style.cssText += 'height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;';
-                    }});
-                }} catch(e) {{}}
-            }}
-            hide();
-            setTimeout(hide, 200);
-            setTimeout(hide, 600);
-        }})();
-
-        // Buscar el number_input de Streamlit en el padre y actualizarlo
+        // ── Sincronizar con Streamlit ──────────────────────────────
         function setStInput(iid, val) {{
             try {{
-                // Los inputs de Streamlit están en el documento padre
-                const frames = window.parent.document.querySelectorAll('iframe');
-                let input = null;
-                // Buscar en el propio iframe primero
-                const inputs = window.parent.document.querySelectorAll('input[type="number"]');
+                var doc = window.parent.document;
+                var inputs = doc.querySelectorAll('input[type="number"]');
+                var found = null;
                 inputs.forEach(function(inp) {{
-                    if (inp.closest('[data-testid]') &&
-                        inp.id && inp.id.includes(String(iid))) {{
-                        input = inp;
-                    }}
+                    if (inp.getAttribute('aria-label') === 'qty_' + iid) found = inp;
                 }});
-                // Fallback: buscar por aria-label
-                if (!input) {{
-                    window.parent.document.querySelectorAll('input[type="number"]').forEach(function(inp) {{
-                        if (inp.getAttribute('aria-label') === 'qty_' + iid) input = inp;
-                    }});
+                if (found) {{
+                    var setter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value').set;
+                    setter.call(found, val);
+                    found.dispatchEvent(new Event('input',  {{ bubbles: true }}));
+                    found.dispatchEvent(new Event('change', {{ bubbles: true }}));
                 }}
-                if (input) {{
-                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
-                        window.HTMLInputElement.prototype, 'value'
-                    ).set;
-                    nativeInputValueSetter.call(input, val);
-                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
-                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
-                }}
-            }} catch(e) {{ console.log('setStInput error:', e); }}
+            }} catch(e) {{}}
         }}
 
-        // Estado local del grid (sincronizado con Streamlit al hacer clic)
+        // Estado local sincronizado desde Python
         var qtys = {{}};
         {chr(10).join(f"        qtys[{item['id']}] = {buffer.get(item['id'], 0)};" for item in items)}
 
+        function syncCard(iid) {{
+            var card  = document.querySelector('.card[data-iid="' + iid + '"]');
+            var inp   = document.getElementById('qty-' + iid);
+            var plus  = card.querySelector('.plus');
+            var minus = card.querySelector('.minus');
+            inp.value     = qtys[iid];
+            minus.disabled = qtys[iid] <= 0;
+            setStInput(iid, qtys[iid]);
+        }}
+
+        // ── Botones +/- ────────────────────────────────────────────
         document.querySelectorAll('.btn-ctrl').forEach(function(btn) {{
             btn.addEventListener('click', function() {{
                 var iid  = parseInt(this.getAttribute('data-iid'));
-                var tipo = this.classList.contains('plus') ? 1 : -1;
-                var card = document.querySelector('.card[data-iid="' + iid + '"]');
-                var plus = card.querySelector('.plus');
-                var minus = card.querySelector('.minus');
+                var paso = this.classList.contains('plus') ? 1 : -1;
+                qtys[iid] = Math.max(0, (qtys[iid] || 0) + paso);
+                syncCard(iid);
+            }});
+        }});
 
-                qtys[iid] = Math.max(0, (qtys[iid] || 0) + tipo);
-
-                // Actualizar display local
-                document.getElementById('qty-' + iid).textContent = qtys[iid];
-
-                // Actualizar botones
-                minus.disabled = qtys[iid] <= 0;
-
-                // Enviar a Streamlit
-                setStInput(iid, qtys[iid]);
+        // ── Input editable directo ──────────────────────────────────
+        document.querySelectorAll('.qty-input').forEach(function(inp) {{
+            inp.addEventListener('input', function() {{
+                var iid = parseInt(this.getAttribute('data-iid'));
+                var val = parseInt(this.value) || 0;
+                val = Math.max(0, Math.min(999, val));
+                qtys[iid] = val;
+                // Actualizar botones sin tocar el input (el usuario lo está editando)
+                var card  = document.querySelector('.card[data-iid="' + iid + '"]');
+                card.querySelector('.minus').disabled = val <= 0;
+                setStInput(iid, val);
+            }});
+            // Al salir del campo, asegurar valor limpio
+            inp.addEventListener('blur', function() {{
+                var iid = parseInt(this.getAttribute('data-iid'));
+                this.value = qtys[iid];
             }});
         }});
         </script>
         </body>
         </html>
-        """, height=((len(items) + 1) // 2) * 175 + 20, scrolling=False)
+        """, height=((len(items) + 1) // 2) * 185 + 20, scrolling=False)
 
 
     # ── Sección extras ──
