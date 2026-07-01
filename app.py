@@ -292,9 +292,9 @@ def init_session():
 def pantalla_bienvenida():
     st.markdown("""
     <div class="hero">
-        <span class="hero-emoji">🍂</span>
+        <span class="hero-emoji">🎉</span>
         <h1 class="hero-title">¡CUMPLEAÑOS SORPRESA LIGHT!</h1>
-        <p class="hero-sub">armemos algo chori pa que quede bacáns 🤎</p>
+        <p class="hero-sub">armemos algo chori pa que quede bacáns :)</p>
     </div>
     """, unsafe_allow_html=True)
 
