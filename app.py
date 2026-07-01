@@ -199,28 +199,33 @@ def inject_styles():
         transform: translateY(-1px) !important;
     }
 
-    /* ── Grid de ítems responsive ── */
-    /* 
-       Streamlit no soporta media queries nativas para columnas,
-       así que hacemos que el stHorizontalBlock del grid se comporte
-       como un CSS grid responsive con auto-fill.
+    /* ── Grid de ítems 2 columnas — funciona dentro del iframe de Streamlit ── */
+    /*
+       El media query no funciona en móvil porque la app vive dentro de un iframe.
+       Solución: CSS grid con min() para que cada celda nunca baje de un tamaño usable,
+       y JS que reasigna los anchos de las columnas de Streamlit al ancho real del contenedor.
     */
-    .item-grid-wrapper [data-testid="stHorizontalBlock"] {
-        display: grid !important;
-        grid-template-columns: repeat(2, 1fr) !important;
-        gap: 0.6rem !important;
+    .item-grid-wrapper {
         width: 100% !important;
     }
-    .item-grid-wrapper [data-testid="stHorizontalBlock"] > div {
+    /* Cada stHorizontalBlock dentro del wrapper: grid de 2 columnas reales */
+    .item-grid-wrapper > div > div > div[data-testid="stHorizontalBlock"] {
+        display: grid !important;
+        grid-template-columns: 1fr 1fr !important;
+        gap: 0.5rem !important;
+        width: 100% !important;
+        flex-wrap: nowrap !important;
+    }
+    /* Cada celda del grid ocupa su espacio completo y no encoge */
+    .item-grid-wrapper > div > div > div[data-testid="stHorizontalBlock"] > div[data-testid="stColumn"] {
         width: 100% !important;
         min-width: 0 !important;
         flex: none !important;
+        max-width: 100% !important;
     }
-    /* En pantallas muy angostas (<360px): 1 columna */
-    @media (max-width: 360px) {
-        .item-grid-wrapper [data-testid="stHorizontalBlock"] {
-            grid-template-columns: 1fr !important;
-        }
+    /* Las tarjetas dentro llenan la celda en altura */
+    .item-grid-wrapper div[data-testid="stVerticalBlockBorderWrapper"] {
+        height: 100% !important;
     }
 
     /* ── Alerta de reingreso ── */
