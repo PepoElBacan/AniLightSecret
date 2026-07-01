@@ -558,29 +558,48 @@ def vista_invitados():
 
         buffer = st.session_state["buffer"]
 
-        # 1. Primero renderizar los number_inputs de Streamlit (ocultos visualmente)
+        # 1. Renderizar los number_inputs de Streamlit completamente ocultos.
+        #    El truco: los envolvemos en un st.container al que le asignamos
+        #    un key, y luego lo ocultamos apuntando al elemento padre con CSS
+        #    usando el atributo data-testid y nth-child conocido.
+        #    Forma más robusta: ocultar por height=0 + overflow hidden en el
+        #    bloque completo con un div marcador visible en el DOM de Streamlit.
         st.markdown("""
         <style>
-        .inputs-ocultos { display: none !important; }
+        /* Ocultar el bloque de inputs numéricos:
+           buscamos el div que sigue inmediatamente al marcador #inputs-ocultos-marker */
+        #inputs-ocultos-marker + div,
+        #inputs-ocultos-marker ~ div [data-testid="stNumberInput"],
+        #inputs-ocultos-marker ~ div [data-testid="stNumberInput"] * {
+            display: none !important;
+        }
+        /* Alternativa por altura cero para el contenedor completo */
+        div:has(> #inputs-ocultos-marker) {
+            height: 0 !important;
+            overflow: hidden !important;
+            margin: 0 !important;
+            padding: 0 !important;
+        }
         </style>
+        <div id="inputs-ocultos-marker"></div>
         """, unsafe_allow_html=True)
 
-        with st.container():
-            st.markdown('<div class="inputs-ocultos">', unsafe_allow_html=True)
-            for item in items:
-                iid    = item["id"]
-                mi_qty = buffer.get(iid, 0)
-                nuevo  = st.number_input(
-                    f"qty_{iid}",
-                    min_value=0, max_value=999,
-                    value=mi_qty, step=1,
-                    key=f"qty_input_{iid}",
-                    label_visibility="collapsed",
-                )
-                if nuevo != mi_qty:
-                    st.session_state["buffer"][iid] = nuevo
-                    st.rerun()
-            st.markdown('</div>', unsafe_allow_html=True)
+        for item in items:
+            iid    = item["id"]
+            mi_qty = buffer.get(iid, 0)
+            nuevo  = st.number_input(
+                f"qty_{iid}",
+                min_value=0, max_value=999,
+                value=mi_qty, step=1,
+                key=f"qty_input_{iid}",
+                label_visibility="collapsed",
+            )
+            if nuevo != mi_qty:
+                st.session_state["buffer"][iid] = nuevo
+                st.rerun()
+
+        # Separador visual para que el CSS :has() funcione
+        st.markdown('<div id="inputs-fin-marker"></div>', unsafe_allow_html=True)
 
         # 2. Construir el HTML puro del grid
         tarjetas_html = ""
@@ -695,6 +714,28 @@ def vista_invitados():
             {tarjetas_html}
         </div>
         <script>
+        // Ocultar los number_input de Streamlit en el documento padre
+        (function ocultarInputs() {{
+            function hide() {{
+                try {{
+                    var doc = window.parent.document;
+                    var marker = doc.getElementById('inputs-ocultos-marker');
+                    if (!marker) return;
+                    // Ocultar todos los stNumberInput que vienen después del marker
+                    var all = doc.querySelectorAll('[data-testid="stNumberInput"]');
+                    all.forEach(function(el) {{ el.style.display = 'none'; }});
+                    // También ocultar sus contenedores padre directos
+                    all.forEach(function(el) {{
+                        var parent = el.parentElement;
+                        if (parent) parent.style.cssText += 'height:0!important;overflow:hidden!important;margin:0!important;padding:0!important;';
+                    }});
+                }} catch(e) {{}}
+            }}
+            hide();
+            setTimeout(hide, 200);
+            setTimeout(hide, 600);
+        }})();
+
         // Buscar el number_input de Streamlit en el padre y actualizarlo
         function setStInput(iid, val) {{
             try {{
