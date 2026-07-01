@@ -91,6 +91,7 @@ def inject_styles():
         background: #ffffff !important;
         margin-bottom: 0.6rem !important;
         transition: box-shadow 0.2s !important;
+        height: 100% !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"]:hover {
         box-shadow: 0 4px 16px rgba(100, 60, 180, 0.13) !important;
@@ -100,48 +101,19 @@ def inject_styles():
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] {
         align-items: center !important;
     }
-    /* Cada celda de columna: flex centrado */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div {
         display: flex !important;
         align-items: center !important;
         justify-content: center !important;
     }
-    /* Primera columna (info): alinear a la izquierda */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stHorizontalBlock"] > div:first-child {
         justify-content: flex-start !important;
     }
 
-    /* Botones +/- dentro de tarjeta: círculo morado suave */
-    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button {
-        border-radius: 50% !important;
-        width: 42px !important;
-        height: 42px !important;
-        min-height: 42px !important;
-        min-width: 42px !important;
-        padding: 0 !important;
-        font-size: 1.2rem !important;
-        font-weight: 700 !important;
-        display: flex !important;
-        align-items: center !important;
-        justify-content: center !important;
-        margin: 0 auto !important;
-        background: #f3eeff !important;
-        color: #6d28d9 !important;
-        border: 1.5px solid #ddd6fe !important;
-        box-shadow: none !important;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button:hover {
-        background: #ede0ff !important;
-        border-color: #a78bfa !important;
-    }
-    div[data-testid="stVerticalBlockBorderWrapper"] .stButton > button:disabled {
-        opacity: 0.3 !important;
-    }
-
-    /* Number input editable: badge morado, sin flechas nativas */
+    /* Number input en tarjeta */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] {
-        margin: 0 !important;
-        width: 80% !important;
+        margin: 0 auto !important;
+        width: 90% !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] input {
         background: #f3eeff !important;
@@ -151,18 +123,34 @@ def inject_styles():
         font-weight: 800 !important;
         font-size: 1.1rem !important;
         text-align: center !important;
-        padding: 0 !important;
         height: 42px !important;
     }
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInput"] input:focus {
         border-color: #7c3aed !important;
         box-shadow: 0 0 0 3px rgba(124,58,237,0.15) !important;
     }
-    /* Ocultar flechas nativas del number_input */
+    /* Botones nativos del number_input: estilo circular morado */
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepDown"],
     div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepUp"] {
-        display: none !important;
+        border-radius: 50% !important;
+        background: #f3eeff !important;
+        border: 1.5px solid #ddd6fe !important;
+        color: #6d28d9 !important;
+        font-weight: 700 !important;
+        width: 36px !important;
+        height: 36px !important;
+        min-width: 36px !important;
+        min-height: 36px !important;
+        display: flex !important;
+        align-items: center !important;
+        justify-content: center !important;
     }
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepDown"]:hover,
+    div[data-testid="stVerticalBlockBorderWrapper"] [data-testid="stNumberInputStepUp"]:hover {
+        background: #ede0ff !important;
+        border-color: #a78bfa !important;
+    }
+
     .item-name {
         font-weight: 700;
         font-size: 1.05rem;
@@ -179,7 +167,7 @@ def inject_styles():
         font-weight: 600;
     }
 
-    /* ── Botones +/- ── */
+    /* ── Botones generales ── */
     .stButton > button {
         border-radius: 12px !important;
         font-weight: 700 !important;
@@ -209,6 +197,30 @@ def inject_styles():
     .confirm-btn > button:hover {
         box-shadow: 0 6px 28px rgba(124, 58, 237, 0.5) !important;
         transform: translateY(-1px) !important;
+    }
+
+    /* ── Grid de ítems responsive ── */
+    /* 
+       Streamlit no soporta media queries nativas para columnas,
+       así que hacemos que el stHorizontalBlock del grid se comporte
+       como un CSS grid responsive con auto-fill.
+    */
+    .item-grid-wrapper [data-testid="stHorizontalBlock"] {
+        display: grid !important;
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.6rem !important;
+        width: 100% !important;
+    }
+    .item-grid-wrapper [data-testid="stHorizontalBlock"] > div {
+        width: 100% !important;
+        min-width: 0 !important;
+        flex: none !important;
+    }
+    /* En pantallas muy angostas (<360px): 1 columna */
+    @media (max-width: 360px) {
+        .item-grid-wrapper [data-testid="stHorizontalBlock"] {
+            grid-template-columns: 1fr !important;
+        }
     }
 
     /* ── Alerta de reingreso ── */
@@ -322,7 +334,6 @@ def inject_styles():
     @media (max-width: 480px) {
         .hero-title  { font-size: 1.45rem; }
         .hero-emoji  { font-size: 3rem; }
-        .item-card   { padding: 0.85rem 0.9rem; }
     }
     </style>
     """, unsafe_allow_html=True)
@@ -366,10 +377,6 @@ def fetch_extras():
 
 
 def upsert_aporte(nombre: str, item_id: int, cantidad: int):
-    """
-    Inserta o actualiza el aporte de un invitado para un ítem.
-    Si cantidad == 0, elimina el registro para mantener la tabla limpia.
-    """
     if cantidad <= 0:
         supabase.table("aportes").delete().eq("nombre_invitado", nombre).eq("item_id", item_id).execute()
     else:
@@ -390,10 +397,6 @@ def insertar_extra(nombre: str, descripcion: str):
         {"nombre_invitado": nombre, "descripcion": descripcion}
     ).execute()
 
-
-# ─────────────────────────────────────────────────────
-# SIMULACIÓN DE NOTIFICACIÓN AL ADMIN
-# ─────────────────────────────────────────────────────
 
 def notificar_admin_extra(nombre_invitado: str, descripcion: str):
     print(f"[NOTIF] Extra de '{nombre_invitado}': {descripcion}")
@@ -470,11 +473,11 @@ def pantalla_bienvenida():
 
     if entrar:
         nombre = nombre_input.strip()
-        if len(nombre.split()) < 2:
-            st.warning("¡Por favor incluye tu apellido para no confundirte con otro invitado! 😊")
-            return
         if not nombre:
             st.warning("¡Escribe tu nombre para continuar! 😊")
+            return
+        if len(nombre.split()) < 2:
+            st.warning("¡Por favor incluye tu apellido para no confundirte con otro invitado! 😊")
             return
 
         aportes_prev = fetch_aportes_invitado(nombre)
@@ -497,7 +500,7 @@ def pantalla_bienvenida():
 
 
 # ─────────────────────────────────────────────
-# VISTA DE INVITADOS
+# ANIMACIÓN DE CLIC
 # ─────────────────────────────────────────────
 
 def inyectar_animacion_clic():
@@ -507,45 +510,37 @@ def inyectar_animacion_clic():
         const doc = window.parent.document;
         if (!doc.getElementById('animacion-clic-luz')) {
             doc.addEventListener('click', function(e) {
-                if (e.target.tagName === 'BUTTON' && e.target.innerText.includes('＋')) {
-                    const emojis = ['✨', '🎉', '💖', '🥳', '🎈'];
-                    const emoji = emojis[Math.floor(Math.random() * emojis.length)];
-                    const el = doc.createElement('div');
-                    
-                    // Estilos del emoji flotante
-                    el.style.position = 'fixed';
-                    el.style.pointerEvents = 'none';
-                    el.style.zIndex = '99999';
-                    el.style.fontSize = '2.2rem';
-                    el.style.left = e.clientX + 'px';
-                    el.style.top = e.clientY + 'px';
-                    el.style.transition = 'all 0.6s cubic-bezier(0.25, 1, 0.5, 1)';
-                    el.style.transform = 'translate(-50%, -50%) scale(0.5)';
-                    el.style.opacity = '1';
-                    el.innerText = emoji;
-                    doc.body.appendChild(el);
-                    
-                    // Forzar el repintado del navegador para que tome la transición
-                    void el.offsetWidth;
-                    
-                    // Mover hacia arriba y desvanecer
-                    el.style.transform = 'translate(-50%, -120px) scale(1.5)';
-                    el.style.opacity = '0';
-                    
-                    // Limpiar el DOM
-                    setTimeout(() => el.remove(), 600);
-                }
+                const btn = e.target.closest('button');
+                if (!btn) return;
+                const emojis = ['✨', '🎉', '💖', '🥳', '🎈'];
+                const emoji = emojis[Math.floor(Math.random() * emojis.length)];
+                const el = doc.createElement('div');
+                el.style.cssText = `
+                    position:fixed; pointer-events:none; z-index:99999;
+                    font-size:2.2rem; left:${e.clientX}px; top:${e.clientY}px;
+                    transition: all 0.6s cubic-bezier(0.25,1,0.5,1);
+                    transform:translate(-50%,-50%) scale(0.5); opacity:1;
+                `;
+                el.innerText = emoji;
+                doc.body.appendChild(el);
+                void el.offsetWidth;
+                el.style.transform = 'translate(-50%,-120px) scale(1.5)';
+                el.style.opacity = '0';
+                setTimeout(() => el.remove(), 650);
             });
             const flag = doc.createElement('div');
             flag.id = 'animacion-clic-luz';
             doc.body.appendChild(flag);
         }
-    } catch (err) {
-        console.log("No se pudo inyectar la animación.");
-    }
+    } catch(e) {}
     </script>
     """)
-    
+
+
+# ─────────────────────────────────────────────
+# VISTA DE INVITADOS
+# ─────────────────────────────────────────────
+
 def vista_invitados():
     nombre = st.session_state["nombre"]
 
@@ -575,51 +570,83 @@ def vista_invitados():
         st.info("El administrador todavía no ha cargado la lista de ítems. ¡Vuelve pronto!")
     else:
         st.markdown("### 🛒 ¿Qué vas a traer?")
-        st.caption("Toca **＋** o **－** para ajustar tu aporte. Los cambios se guardan al final.")
+        st.caption("Ajusta la cantidad de cada ítem con los botones **＋** y **－**.")
         st.markdown("")
 
-        buffer: dict = st.session_state["buffer"]
-
-        # Llamamos a la animación justo antes de renderizar los ítems
         inyectar_animacion_clic()
 
-        # Reemplaza la definición de renderizar_fila dentro de vista_invitados
-        @st.fragment
-        def renderizar_fila(item):
-            iid = item["id"]
-            nombre_i = item["nombre"]
-            emoji_i = item["emoji"] or "📦"
-            meta = item["cantidad_meta"]
-            asignado = item["total_asignado"] or 0
-            faltan = max(0, meta - asignado)
-            unidad_i = item.get("unidad") or ""
-            ud = f" {unidad_i}" if unidad_i else ""
+        # ── Grid 2 columnas responsive ──
+        # Envolvemos en un div con clase para poder aplicar CSS grid encima
+        st.markdown('<div class="item-grid-wrapper">', unsafe_allow_html=True)
 
-            mi_qty = st.session_state["buffer"].get(iid, 0)
+        @st.fragment
+        def renderizar_item(item):
+            iid      = item["id"]
+            emoji_i  = item["emoji"] or "📦"
+            meta     = item["cantidad_meta"]
+            asignado = item["total_asignado"] or 0
+            faltan   = max(0, meta - asignado)
+            meta_ok  = asignado >= meta
+            unidad_i = item.get("unidad") or ""
+            ud       = f" {unidad_i}" if unidad_i else ""
+            mi_qty   = st.session_state["buffer"].get(iid, 0)
 
             with st.container(border=True):
-                # Emoji grande centrado
-                st.markdown(f'<div style="text-align:center; font-size:3rem; margin-bottom:0.5rem;">{emoji_i}</div>', unsafe_allow_html=True)
-                # Título
-                st.markdown(f'<div style="text-align:center; font-weight:700; color:#2d1b4e; font-size:1.1rem;">{nombre_i}</div>', unsafe_allow_html=True)
-                # Info estado
-                st.markdown(f'<div style="text-align:center; font-size:0.85rem; color:#7c6fa0; margin-bottom:1rem;">Faltan {faltan}{ud}</div>', unsafe_allow_html=True)
-                
-                # Input centralizado (Streamlit manejará sus propios botones +/- nativos)
-                st.number_input(
-                    "Cantidad", min_value=0, max_value=999, value=mi_qty, step=1,
-                    key=f"qty_input_{iid}", label_visibility="collapsed",
-                    on_change=lambda: st.session_state["buffer"].update({iid: st.session_state[f"qty_input_{iid}"]})
+                # Emoji grande
+                st.markdown(
+                    f'<div style="text-align:center;font-size:2.6rem;'
+                    f'line-height:1;margin-bottom:0.3rem;">{emoji_i}</div>',
+                    unsafe_allow_html=True,
                 )
+                # Nombre
+                st.markdown(
+                    f'<div style="text-align:center;font-weight:700;'
+                    f'color:#2d1b4e;font-size:1rem;margin-bottom:0.2rem;">'
+                    f'{item["nombre"]}</div>',
+                    unsafe_allow_html=True,
+                )
+                # Estado
+                if meta_ok and mi_qty == 0:
+                    st.markdown(
+                        '<div style="text-align:center;font-size:0.8rem;'
+                        'color:#22c55e;font-weight:600;margin-bottom:0.7rem;">'
+                        '✅ ¡Meta cumplida!</div>',
+                        unsafe_allow_html=True,
+                    )
+                else:
+                    st.markdown(
+                        f'<div style="text-align:center;font-size:0.78rem;'
+                        f'color:#7c6fa0;margin-bottom:0.7rem;">'
+                        f'Faltan {faltan}{ud}</div>',
+                        unsafe_allow_html=True,
+                    )
+                # Number input con botones nativos (son los únicos que no rompen el estado)
+                nuevo_val = st.number_input(
+                    "Cantidad",
+                    min_value=0,
+                    max_value=999,
+                    value=mi_qty,
+                    step=1,
+                    key=f"qty_input_{iid}",
+                    label_visibility="collapsed",
+                    disabled=(meta_ok and mi_qty == 0),
+                )
+                if nuevo_val != mi_qty:
+                    st.session_state["buffer"][iid] = nuevo_val
+                    st.rerun()
 
-        # ── Implementación de la cuadrícula de 3 columnas ──
-        columnas_grid = st.columns(2)
-        
-        # Iteramos sobre los ítems
-        for idx, item in enumerate(items):
-            # Usamos el módulo (%) para distribuir en esas 3 columnas
-            with columnas_grid[idx % 2]:
-                renderizar_fila(item)
+        # Distribuir ítems en pares de columnas
+        for i in range(0, len(items), 2):
+            cols = st.columns(2, gap="small")
+            with cols[0]:
+                renderizar_item(items[i])
+            if i + 1 < len(items):
+                with cols[1]:
+                    renderizar_item(items[i + 1])
+
+        st.markdown('</div>', unsafe_allow_html=True)  # cierra item-grid-wrapper
+
+    # ── Sección extras ──
     st.markdown("""
     <div class="extras-box">
         <div class="extras-title">💡 ¿Tienes una idea genial?</div>
@@ -650,18 +677,18 @@ def vista_invitados():
     if confirmar:
         alguna_qty = any(v > 0 for v in st.session_state["buffer"].values())
         hay_extra  = bool(st.session_state["extra_texto"].strip())
-        
+
         if not alguna_qty and not hay_extra:
             st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
         else:
             with st.spinner("Guardando tu aporte... 🎊"):
                 emojis_aportes = []
-                for item in items:
+                for item in (fetch_progreso() or []):
                     iid = item["id"]
                     qty = st.session_state["buffer"].get(iid, 0)
                     if qty > 0:
                         emojis_aportes.append(item["emoji"] or "📦")
-                        
+
                 for iid, qty in st.session_state["buffer"].items():
                     upsert_aporte(nombre, iid, qty)
 
@@ -671,48 +698,40 @@ def vista_invitados():
 
             emojis_base = ["🎂", "🥳", "🎉", "🎈", "✨"]
             st.session_state["emojis_lluvia"] = list(set(emojis_aportes + emojis_base))
-
             fetch_progreso.clear()
-
-            time.sleep(0.6)
-
+            time.sleep(0.4)
             st.session_state["extra_texto"] = ""
             st.session_state.pop("reingreso_msg", None)
             st.session_state["mostrar_exito"] = True
             st.rerun()
 
     if st.session_state.get("mostrar_exito"):
-        # Generar animación CSS de lluvia de emojis
         lluvia_html = """
         <style>
         .emoji-drop {
-            position: fixed;
-            top: -10vh;
-            z-index: 999999;
-            animation-name: fall;
-            animation-timing-function: linear;
-            animation-fill-mode: forwards;
-            pointer-events: none;
-            user-select: none;
+            position: fixed; top: -10vh; z-index: 999999;
+            animation-name: fall; animation-timing-function: linear;
+            animation-fill-mode: forwards; pointer-events: none; user-select: none;
         }
         @keyframes fall {
-            0% { transform: translateY(0) rotate(0deg); opacity: 1; }
-            80% { opacity: 1; }
+            0%   { transform: translateY(0) rotate(0deg); opacity: 1; }
+            80%  { opacity: 1; }
             100% { transform: translateY(115vh) rotate(360deg); opacity: 0; }
         }
         </style>
         """
-        
         for _ in range(60):
-            e = random.choice(st.session_state["emojis_lluvia"])
-            left = random.randint(0, 100)
-            dur = random.uniform(2.5, 4.5)
+            e     = random.choice(st.session_state["emojis_lluvia"])
+            left  = random.randint(0, 100)
+            dur   = random.uniform(2.5, 4.5)
             delay = random.uniform(0, 1.5)
-            size = random.randint(25, 45)
-            lluvia_html += f'<div class="emoji-drop" style="left:{left}vw; animation-duration:{dur}s; animation-delay:{delay}s; font-size:{size}px;">{e}</div>'
-        
+            size  = random.randint(25, 45)
+            lluvia_html += (
+                f'<div class="emoji-drop" style="left:{left}vw;'
+                f'animation-duration:{dur}s;animation-delay:{delay}s;'
+                f'font-size:{size}px;">{e}</div>'
+            )
         st.markdown(lluvia_html, unsafe_allow_html=True)
-        
         st.markdown("""
         <div class="success-box">
             <h3>🥳 ¡Listo, estás anotado!</h3>
@@ -768,20 +787,18 @@ def vista_admin():
 
     with tab_dashboard:
         st.markdown("#### Progreso por ítem")
-
         items = fetch_progreso()
         if not items:
             st.info("Sin ítems aún. Agrégalos en la pestaña ➕.")
         else:
-            total_meta     = sum(i["cantidad_meta"]   for i in items)
-            total_asignado = sum(i["total_asignado"]  for i in items)
+            total_meta     = sum(i["cantidad_meta"]  for i in items)
+            total_asignado = sum(i["total_asignado"] for i in items)
             items_ok       = sum(1 for i in items if i["total_asignado"] >= i["cantidad_meta"])
 
             m1, m2, m3 = st.columns(3)
-            m1.metric("Ítems en lista",    len(items))
-            m2.metric("Ítems cubiertos",   f"{items_ok}/{len(items)}")
-            m3.metric("Unidades totales",  f"{total_asignado}/{total_meta}")
-
+            m1.metric("Ítems en lista",   len(items))
+            m2.metric("Ítems cubiertos",  f"{items_ok}/{len(items)}")
+            m3.metric("Unidades totales", f"{total_asignado}/{total_meta}")
             st.markdown("<br>", unsafe_allow_html=True)
 
             for item in items:
@@ -804,13 +821,15 @@ def vista_admin():
                     if asignado >= meta:
                         st.markdown("<br>✅", unsafe_allow_html=True)
                     else:
-                        st.markdown(f"<br><span style='color:#7c6fa0;font-size:0.85rem;'>Faltan {meta-asignado}{ud_label}</span>", unsafe_allow_html=True)
-
+                        st.markdown(
+                            f"<br><span style='color:#7c6fa0;font-size:0.85rem;'>"
+                            f"Faltan {meta-asignado}{ud_label}</span>",
+                            unsafe_allow_html=True,
+                        )
                 st.markdown("")
 
     with tab_aportes:
         st.markdown("#### ¿Quién lleva qué?")
-
         aportes = fetch_todos_aportes()
         if not aportes:
             st.info("Nadie ha confirmado aportes todavía.")
@@ -820,11 +839,10 @@ def vista_admin():
                 unidad_a = a["items"].get("unidad") or ""
                 cant_str = f"{a['cantidad']} {unidad_a}".strip()
                 rows.append({
-                    "Invitado":  a["nombre_invitado"],
-                    "Ítem":      f"{a['items']['emoji']} {a['items']['nombre']}",
-                    "Cantidad":  cant_str,
+                    "Invitado": a["nombre_invitado"],
+                    "Ítem":     f"{a['items']['emoji']} {a['items']['nombre']}",
+                    "Cantidad": cant_str,
                 })
-
             import pandas as pd
             df = pd.DataFrame(rows)
             st.dataframe(
@@ -834,28 +852,24 @@ def vista_admin():
                 column_config={
                     "Invitado": st.column_config.TextColumn("👤 Invitado"),
                     "Ítem":     st.column_config.TextColumn("🛒 Ítem"),
-                    "Cantidad": st.column_config.NumberColumn("🔢 Cant.", format="%d"),
+                    "Cantidad": st.column_config.TextColumn("🔢 Cant."),
                 },
             )
             st.caption(f"Total de registros: {len(rows)}")
 
     with tab_extras:
         st.markdown("#### 💡 Propuestas de los invitados")
-
         extras = fetch_extras()
         if not extras:
             st.info("Nadie ha propuesto extras aún.")
         else:
             for ex in extras:
                 with st.container():
-                    st.markdown(
-                        f"**{ex['nombre_invitado']}** — {ex['descripcion']}"
-                    )
+                    st.markdown(f"**{ex['nombre_invitado']}** — {ex['descripcion']}")
                     st.markdown("<hr class='divider'>", unsafe_allow_html=True)
 
     with tab_agregar:
         st.markdown("#### ➕ Nuevo ítem para la lista")
-
         with st.form("form_nuevo_item", clear_on_submit=True):
             col_e, col_n = st.columns([1, 4])
             with col_e:
@@ -870,9 +884,8 @@ def vista_admin():
                 unidad_nueva = st.text_input(
                     "Tipo de unidad",
                     placeholder="Ej: litros, bolsas, unidades, gramos…",
-                    help="Se mostrará junto a la cantidad. Puedes escribir lo que quieras.",
+                    help="Se mostrará junto a la cantidad.",
                 )
-
             submitted = st.form_submit_button("Agregar ítem ✅", use_container_width=True)
 
         if submitted:
