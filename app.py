@@ -57,22 +57,6 @@ def inject_styles():
     #MainMenu, footer { visibility: hidden; }
     header { background: transparent !important; }
 
-    /* ── Corrección de Espacios (Ocultar stNumberInput) ── */
-    [data-testid="stNumberInput"] { display: none !important; }
-    [data-testid="stElementContainer"]:has([data-testid="stNumberInput"]) {
-        position: absolute !important;
-        width: 0 !important;
-        height: 0 !important;
-        min-height: 0 !important;
-        margin: 0 !important;
-        padding: 0 !important;
-        visibility: hidden !important;
-        border: none !important;
-    }
-    [data-testid="stVerticalBlock"]:has([data-testid="stNumberInput"]) {
-        gap: 0 !important;
-    }
-
     /* ── Hero header ── */
     .hero {
         text-align: center;
@@ -372,6 +356,27 @@ def pantalla_bienvenida():
 # ─────────────────────────────────────────────
 
 def vista_invitados():
+    
+    st.markdown("""
+    <style>
+    /* ── Ocultar inputs nativos SOLO en la vista de invitados ── */
+    [data-testid="stNumberInput"] { display: none !important; }
+    [data-testid="stElementContainer"]:has([data-testid="stNumberInput"]) {
+        position: absolute !important;
+        width: 0 !important;
+        height: 0 !important;
+        min-height: 0 !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        visibility: hidden !important;
+        border: none !important;
+    }
+    [data-testid="stVerticalBlock"]:has([data-testid="stNumberInput"]) {
+        gap: 0 !important;
+    }
+    </style>
+    """, unsafe_allow_html=True)
+    
     nombre = st.session_state["nombre"]
 
     st.markdown(f"""
