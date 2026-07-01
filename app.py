@@ -320,7 +320,7 @@ def pantalla_bienvenida():
         st.markdown("**¿Cuál es tu nombre?**")
         nombre_input = st.text_input(
             "Nombre",
-            placeholder="Ej: Pedro Marquinez",
+            placeholder="Nombre y apellido (Ej: Lux Arteaga)",
             label_visibility="collapsed",
             key="input_nombre",
         )
@@ -868,7 +868,7 @@ def vista_admin():
             with col_e:
                 emoji_nuevo = st.text_input("Emoji", value="🍂", max_chars=4)
             with col_n:
-                nombre_nuevo = st.text_input("Nombre", placeholder="Ej: Hummus")
+                nombre_nuevo = st.text_input("Nombre", placeholder="Ej: Papitas fritas")
 
             col_meta, col_unidad = st.columns([1, 2])
             with col_meta:
