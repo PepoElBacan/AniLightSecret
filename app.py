@@ -293,8 +293,8 @@ def pantalla_bienvenida():
     st.markdown("""
     <div class="hero">
         <span class="hero-emoji">🍂</span>
-        <h1 class="hero-title">¡Es el cumple de Luz!</h1>
-        <p class="hero-sub">Celebremos juntos y armemos algo lindo 🤎</p>
+        <h1 class="hero-title">¡CUMPLEAÑOS SORPRESA LIGHT!</h1>
+        <p class="hero-sub">armemos algo chori pa que quede bacáns 🤎</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -312,7 +312,7 @@ def pantalla_bienvenida():
         col_esp, col_btn = st.columns([2, 1])
         with col_btn:
             st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-            entrar = st.button("Entrar ✨", use_container_width=True)
+            entrar = st.button("Entrar", use_container_width=True)
             st.markdown("</div>", unsafe_allow_html=True)
 
     st.markdown("<br><br>", unsafe_allow_html=True)
@@ -383,7 +383,7 @@ def vista_invitados():
     <div class="hero">
         <span class="hero-emoji">🧺</span>
         <h1 class="hero-title">¡Hola, {nombre.split()[0]}!</h1>
-        <p class="hero-sub">Elige qué vas a traer para compartir</p>
+        <p class="hero-sub">Elige qué vas a traer para compartir, luego puedes entrar de nuevo con el mismo nombre para editar</p>
     </div>
     """, unsafe_allow_html=True)
 
@@ -445,7 +445,7 @@ def vista_invitados():
                 estado_html   = '<div class="estado done">✅ Completado</div>'
                 disabled_plus = "disabled"
             else:
-                estado_html   = f'<div class="estado">{faltan}{ud} disponibles</div>'
+                estado_html   = f'<div class="estado">se necesitan {faltan}{ud}</div>'
                 disabled_plus = ""
 
             disabled_minus = "disabled" if mi_qty <= 0 else ""
@@ -656,7 +656,7 @@ def vista_invitados():
     st.markdown("""
     <div class="extras-box">
         <div class="extras-title">💡 ¿Se te ocurre algo más?</div>
-        <div class="extras-subtitle">Una torta, guirnaldas, o un detalle especial</div>
+        <div class="extras-subtitle">Una torta, guirnaldas, o un detalle especial...</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -673,7 +673,7 @@ def vista_invitados():
     st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-    confirmar = st.button("Confirmar mi Aporte 🤎", use_container_width=True)
+    confirmar = st.button("Confirmo que llevaré esto", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
