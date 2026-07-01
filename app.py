@@ -34,7 +34,7 @@ supabase = get_supabase()
 
 
 # ─────────────────────────────────────────────
-# ESTILOS GLOBALES (PALETA PACHAMÁMICA Y MINIMALISTA)
+# ESTILOS GLOBALES (PALETA TERRACOTA Y ANIMACIONES)
 # ─────────────────────────────────────────────
 
 def inject_styles():
@@ -87,13 +87,13 @@ def inject_styles():
     .hero-title {
         font-size: 1.8rem;
         font-weight: 700;
-        color: #3E362E; /* Café muy oscuro */
+        color: #3E362E;
         margin: 0;
         letter-spacing: -0.5px;
     }
     .hero-sub {
         font-size: 1rem;
-        color: #7A6F62; /* Tierra suave */
+        color: #7A6F62;
         margin-top: 0.4rem;
         font-weight: 500;
     }
@@ -109,38 +109,38 @@ def inject_styles():
         transition: all 0.2s ease !important;
     }
     .stButton > button:hover {
-        border-color: #401D06 !important;
-        color: #401D06 !important;
+        border-color: #612B08 !important;
+        color: #612B08 !important;
     }
     .stButton > button:active {
         transform: scale(0.97) !important;
     }
 
-    /* Botón confirmar (Verde Musgo) */
+    /* Botón confirmar (Terracota) */
     .confirm-btn > button {
-        background-color: #401D06 !important;
+        background-color: #612B08 !important;
         color: white !important;
         border: none !important;
         border-radius: 12px !important;
         font-size: 1.1rem !important;
         font-weight: 600 !important;
-        box-shadow: 0 4px 12px rgba(92, 110, 79, 0.2) !important;
+        box-shadow: 0 4px 12px rgba(97, 43, 8, 0.2) !important;
     }
     .confirm-btn > button:hover {
-        background-color: #4A593F !important;
-        box-shadow: 0 6px 16px rgba(92, 110, 79, 0.3) !important;
+        background-color: #4A2106 !important;
+        box-shadow: 0 6px 16px rgba(97, 43, 8, 0.3) !important;
         color: white !important;
     }
 
     /* ── Alertas y Cajas ── */
     .reingreso-alert {
         background-color: #F4EFE6;
-        border-left: 4px solid #D9A05B; /* Acento ocre */
+        border-left: 4px solid #D9A05B;
         border-radius: 0 8px 8px 0;
         padding: 1rem 1.2rem;
         margin-bottom: 1.5rem;
     }
-    .reingreso-alert b { color: #401D06; }
+    .reingreso-alert b { color: #5C4326; }
     .reingreso-alert p { color: #7A6F62; margin: 0; font-size: 0.95rem; margin-top: 4px;}
 
     .extras-box {
@@ -153,7 +153,7 @@ def inject_styles():
     }
     .extras-title {
         font-weight: 600;
-        color: #8C5E45; /* Terracota */
+        color: #8C5E45;
         font-size: 1.05rem;
     }
     .extras-subtitle {
@@ -163,14 +163,14 @@ def inject_styles():
     }
 
     .success-box {
-        background-color: #EAECE6; /* Verde musgo ultra claro */
-        border: 1px solid #BCC4B7;
+        background-color: #F5ECE6; /* Terracota ultra claro */
+        border: 1px solid #DBC6B8;
         border-radius: 12px;
         padding: 1.5rem;
         text-align: center;
     }
-    .success-box h3 { color: #3C4A31; margin: 0; font-size: 1.2rem; }
-    .success-box p  { color: #401D06; margin: 0.5rem 0 0; font-size: 0.95rem; }
+    .success-box h3 { color: #451E05; margin: 0; font-size: 1.2rem; }
+    .success-box p  { color: #612B08; margin: 0.5rem 0 0; font-size: 0.95rem; }
 
     /* ── Divider ── */
     .divider {
@@ -206,8 +206,8 @@ def inject_styles():
     }
     .stTextInput > div > div > input:focus,
     .stTextArea > div > div > textarea:focus {
-        border-color: #401D06 !important;
-        box-shadow: 0 0 0 2px rgba(92, 110, 79, 0.1) !important;
+        border-color: #612B08 !important;
+        box-shadow: 0 0 0 2px rgba(97, 43, 8, 0.1) !important;
     }
 
     /* Sidebar */
@@ -215,7 +215,7 @@ def inject_styles():
     [data-testid="stSidebar"] * { color: #E6E2D6 !important; }
     [data-testid="stSidebar"] .stTextInput > div > div > input {
         background: #3E362E !important;
-        border-color: #401D06 !important;
+        border-color: #5C4D40 !important;
         color: white !important;
     }
     </style>
@@ -308,7 +308,7 @@ def init_session():
 def pantalla_bienvenida():
     st.markdown("""
     <div class="hero">
-        <span class="hero-emoji">🌿</span>
+        <span class="hero-emoji">🍂</span>
         <h1 class="hero-title">¡Es el cumple de Luz!</h1>
         <p class="hero-sub">Celebremos juntos y armemos algo lindo 🤎</p>
     </div>
@@ -342,7 +342,7 @@ def pantalla_bienvenida():
     """, unsafe_allow_html=True)
 
     if st.query_params.get("admin") == "1":
-        st.info("👈 Ingresa tu contraseña en el panel lateral para acceder.")
+        st.info("👈 Ingresa tu contraseña en el panel lateral para acceder")
 
     if entrar:
         nombre = nombre_input.strip()
@@ -387,8 +387,8 @@ def vista_invitados():
         st.markdown(f"""
         <div class="reingreso-alert">
             <b>¡Qué bueno verte de nuevo! 👋</b>
-            <p>Ya estabas anotado con: <b>{lista}</b>.<br>
-            Puedes ajustar tus aportes si lo necesitas.</p>
+            <p>Ya estabas anotado con: <b>{lista}</b><br>
+            Puedes ajustar tus aportes si lo necesitas</p>
         </div>
         """, unsafe_allow_html=True)
 
@@ -397,9 +397,9 @@ def vista_invitados():
     items = fetch_progreso()
 
     if not items:
-        st.info("Aún no hay ítems en la lista. ¡Vuelve pronto!")
+        st.info("Aún no hay ítems en la lista ¡Vuelve pronto!")
     else:
-        st.markdown("<p style='color:#7A6F62; font-size:0.9rem; text-align:center;'>Ajusta las cantidades con los botones <b>＋</b> y <b>－</b></p>", unsafe_allow_html=True)
+        st.markdown("<p style='color:#7A6F62; font-size:0.9rem; text-align:center;'>Ajusta las cantidades con los botones o escribe el número directamente</p>", unsafe_allow_html=True)
         
         buffer = st.session_state["buffer"]
         needs_rerun = False
@@ -427,7 +427,7 @@ def vista_invitados():
         tarjetas_html = ""
         for item in items:
             iid      = item["id"]
-            emoji_i  = item["emoji"] or "🪴"
+            emoji_i  = item["emoji"] or "🍂"
             meta     = item["cantidad_meta"]
             asignado = item["total_asignado"] or 0
             faltan   = max(0, meta - asignado)
@@ -482,55 +482,82 @@ def vista_invitados():
                 background: #FFFFFF;
                 border: 1px solid #E6E2D6;
                 border-radius: 12px;
-                padding: 16px 12px;
+                padding: 24px 12px 18px;
                 display: flex;
                 flex-direction: column;
                 align-items: center;
                 gap: 6px;
                 box-shadow: 0 2px 6px rgba(62, 54, 46, 0.04);
+                animation: fadeUp 0.4s ease-out forwards;
+                transition: transform 0.2s ease, box-shadow 0.2s ease;
+            }}
+            .card:hover {{
+                transform: translateY(-4px);
+                box-shadow: 0 8px 20px rgba(97, 43, 8, 0.1);
             }}
 
-            .card-emoji  {{ font-size: 3rem; line-height: 1; margin-bottom: 4px; }}
+            .card-emoji {{ 
+                font-size: 3.8rem; 
+                line-height: 1; 
+                margin-bottom: 12px; 
+                transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            }}
+            .card:hover .card-emoji {{
+                transform: scale(1.15) translateY(-4px) rotate(4deg);
+            }}
+
             .card-nombre {{
                 font-weight: 600; font-size: 0.95rem;
                 color: #3E362E; text-align: center;
             }}
             .estado {{
                 font-size: 0.75rem; color: #7A6F62;
-                text-align: center; margin-bottom: 8px;
+                text-align: center; margin-bottom: 10px;
             }}
-            .estado.done {{ color: #401D06; font-weight: 600; }}
+            .estado.done {{ color: #612B08; font-weight: 700; }}
 
             .card-controls {{
                 display: flex; align-items: center;
-                gap: 8px; width: 100%; justify-content: center;
+                gap: 6px; width: 100%; justify-content: center;
             }}
             .btn-ctrl {{
-                width: 32px; height: 32px;
-                border-radius: 6px;
-                background: #F9F6F0;
+                width: 36px; height: 36px;
+                border-radius: 8px;
+                background: #FFFFFF;
                 border: 1px solid #D6CFC4;
-                color: #401D06;
-                font-size: 1.1rem; font-weight: 600;
+                color: #612B08;
+                font-size: 1.2rem; font-weight: 600;
                 cursor: pointer;
                 display: flex; align-items: center; justify-content: center;
                 transition: all 0.2s ease;
             }}
-            .btn-ctrl:hover:not(:disabled)  {{ background: #EAECE6; border-color: #401D06; }}
+            .btn-ctrl:hover:not(:disabled)  {{ background: #F5ECE6; border-color: #612B08; }}
             .btn-ctrl:disabled {{ opacity: 0.3; cursor: default; }}
 
             .qty-input {{
-                width: 44px; height: 32px;
+                width: 52px; height: 36px;
                 text-align: center;
-                font-size: 1rem; font-weight: 600;
+                font-size: 1.1rem; font-weight: 700;
                 color: #3E362E;
-                background: transparent;
-                border: none;
+                background: #F4EFE6;
+                border: 1px solid #D6CFC4;
+                border-radius: 8px;
                 outline: none;
+                transition: all 0.2s ease;
                 -moz-appearance: textfield;
+            }}
+            .qty-input:focus {{
+                border-color: #612B08;
+                box-shadow: 0 0 0 2px rgba(97,43,8,0.15);
+                background: #FFFFFF;
             }}
             .qty-input::-webkit-outer-spin-button,
             .qty-input::-webkit-inner-spin-button {{ -webkit-appearance: none; margin: 0; }}
+
+            @keyframes fadeUp {{
+                from {{ opacity: 0; transform: translateY(15px); }}
+                to {{ opacity: 1; transform: translateY(0); }}
+            }}
         </style>
         </head>
         <body>
@@ -617,14 +644,14 @@ def vista_invitados():
         </script>
         </body>
         </html>
-        """, height=((len(items) + 1) // 2) * 175 + 20, scrolling=False)
+        """, height=((len(items) + 1) // 2) * 205 + 20, scrolling=False)
 
 
     # ── Sección extras ──
     st.markdown("""
     <div class="extras-box">
         <div class="extras-title">💡 ¿Se te ocurre algo más?</div>
-        <div class="extras-subtitle">Una torta, guirnaldas, o un detalle especial.</div>
+        <div class="extras-subtitle">Una torta, guirnaldas, o un detalle especial</div>
     </div>
     """, unsafe_allow_html=True)
 
@@ -641,7 +668,7 @@ def vista_invitados():
     st.markdown("<br>", unsafe_allow_html=True)
 
     st.markdown('<div class="confirm-btn">', unsafe_allow_html=True)
-    confirmar = st.button("Confirmar mi Aporte 🌿", use_container_width=True)
+    confirmar = st.button("Confirmar mi Aporte 🤎", use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     if confirmar:
@@ -649,7 +676,7 @@ def vista_invitados():
         hay_extra  = bool(st.session_state["extra_texto"].strip())
 
         if not alguna_qty and not hay_extra:
-            st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar.")
+            st.warning("⚠️ Agrega al menos un ítem o una propuesta antes de confirmar")
         else:
             with st.spinner("Guardando... ✨"):
                 emojis_aportes = []
@@ -657,16 +684,16 @@ def vista_invitados():
                     iid = item["id"]
                     qty = st.session_state["buffer"].get(iid, 0)
                     if qty > 0:
-                        emojis_aportes.append(item["emoji"] or "🪴")
+                        emojis_aportes.append(item["emoji"] or "🍂")
 
                 for iid, qty in st.session_state["buffer"].items():
-                    if qty >= 0: # Check de seguridad añadido
+                    if qty >= 0:
                         upsert_aporte(nombre, iid, qty)
 
                 if hay_extra:
                     insertar_extra(nombre, extra_texto.strip())
 
-            emojis_base = ["🤎", "🌿", "✨", "🍂", "🪴"]
+            emojis_base = ["🤎", "🍂", "✨", "🎉", "🪴"]
             st.session_state["emojis_lluvia"] = list(set(emojis_aportes + emojis_base))
             fetch_progreso.clear()
             time.sleep(0.4)
@@ -705,8 +732,8 @@ def vista_invitados():
         st.markdown("""
         <div class="success-box">
             <h3>✨ ¡Aporte guardado!</h3>
-            <p>Gracias por sumar tu granito de arena.<br>
-            Puedes volver a modificarlo cuando quieras.</p>
+            <p>Gracias por sumar tu granito de arena<br>
+            Puedes volver a modificarlo cuando quieras</p>
         </div>
         """, unsafe_allow_html=True)
         st.session_state["mostrar_exito"] = False
@@ -725,7 +752,7 @@ def vista_invitados():
 
 def sidebar_admin():
     with st.sidebar:
-        st.markdown("### 🌿 Panel Admin")
+        st.markdown("### 🍂 Panel Admin")
 
         if not st.session_state["admin_ok"]:
             pw = st.text_input("Contraseña", type="password", key="admin_pw")
@@ -758,7 +785,7 @@ def vista_admin():
     with tab_dashboard:
         items = fetch_progreso()
         if not items:
-            st.info("Sin ítems aún. Agrégalos en la pestaña ➕.")
+            st.info("Sin ítems aún Agrégalos en la pestaña ➕")
         else:
             total_meta     = sum(i["cantidad_meta"]  for i in items)
             total_asignado = sum(i["total_asignado"] for i in items)
@@ -800,7 +827,7 @@ def vista_admin():
     with tab_aportes:
         aportes = fetch_todos_aportes()
         if not aportes:
-            st.info("Nadie ha confirmado aportes todavía.")
+            st.info("Nadie ha confirmado aportes todavía")
         else:
             rows = []
             for a in aportes:
@@ -828,7 +855,7 @@ def vista_admin():
     with tab_extras:
         extras = fetch_extras()
         if not extras:
-            st.info("Nadie ha propuesto extras aún.")
+            st.info("Nadie ha propuesto extras aún")
         else:
             for ex in extras:
                 with st.container():
@@ -839,7 +866,7 @@ def vista_admin():
         with st.form("form_nuevo_item", clear_on_submit=True):
             col_e, col_n = st.columns([1, 4])
             with col_e:
-                emoji_nuevo = st.text_input("Emoji", value="🪴", max_chars=4)
+                emoji_nuevo = st.text_input("Emoji", value="🍂", max_chars=4)
             with col_n:
                 nombre_nuevo = st.text_input("Nombre", placeholder="Ej: Hummus")
 
@@ -849,7 +876,7 @@ def vista_admin():
             with col_unidad:
                 unidad_nueva = st.text_input("Unidad", placeholder="Ej: potes, bolsas...")
             
-            submitted = st.form_submit_button("Agregar ítem 🌿", use_container_width=True)
+            submitted = st.form_submit_button("Agregar ítem 🤎", use_container_width=True)
 
         if submitted:
             if nombre_nuevo.strip():
@@ -858,7 +885,7 @@ def vista_admin():
                 st.success(f"¡'{nombre_nuevo}' agregado! ✨")
                 st.rerun()
             else:
-                st.warning("El nombre no puede estar vacío.")
+                st.warning("El nombre no puede estar vacío")
 
 
 # ─────────────────────────────────────────────
