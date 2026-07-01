@@ -64,7 +64,7 @@ def inject_styles():
         padding: 2.2rem 1rem 1.2rem;
     }
     .hero-emoji {
-        font-size: 3.8rem;
+        font-size: 4.3rem;
         line-height: 1;
         margin-bottom: 0.4rem;
         display: block;
