@@ -733,13 +733,12 @@ def vista_invitados():
             {tarjetas_html}
         </div>
         <script>
-        // Forzar colapso del DOM de Streamlit para móviles viejos
-        try {
+        try {{
             var doc = window.parent.document;
             var stInputs = doc.querySelectorAll('[data-testid="stNumberInput"]');
-            stInputs.forEach(function(inp) {
+            stInputs.forEach(function(inp) {{
                 var container = inp.closest('[data-testid="stElementContainer"]');
-                if (container) {
+                if (container) {{
                     container.style.position = 'absolute';
                     container.style.height = '0px';
                     container.style.minHeight = '0px';
@@ -747,14 +746,14 @@ def vista_invitados():
                     container.style.padding = '0px';
                     container.style.visibility = 'hidden';
                     container.style.border = 'none';
-                }
+                }}
                 // Buscar el bloque vertical padre y quitarle el gap
                 var verticalBlock = inp.closest('[data-testid="stVerticalBlock"]');
-                if (verticalBlock) {
+                if (verticalBlock) {{
                     verticalBlock.style.gap = '0px';
-                }
-            });
-        } catch(e) {}
+                }}
+            }});
+        }} catch(e) {{}}
         // ── Sincronizar con Streamlit ──────────────────────────────
         function setStInput(iid, val) {{
             try {{
