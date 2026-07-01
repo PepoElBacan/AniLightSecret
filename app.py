@@ -551,72 +551,40 @@ def vista_invitados():
 
         inyectar_animacion_clic()
 
-        # ── Inyectar CSS grid directamente en el <head> del iframe ──
-        # st.html escribe dentro del documento del iframe (no del padre),
-        # así que los estilos se aplican sin problemas cross-origin en Safari/Chrome móvil.
-        st.html("""
+        # ── Construir HTML del grid completo ──
+        # Las tarjetas son HTML puro dentro de components.html → grid real en cualquier browser.
+        # Los number_input de Streamlit quedan debajo (ocultos con CSS) para manejar el estado.
+        # JS dentro del componente escucha clicks en +/- y dispara eventos en los inputs reales.
+
+        buffer = st.session_state["buffer"]
+
+        # 1. Primero renderizar los number_inputs de Streamlit (ocultos visualmente)
+        st.markdown("""
         <style>
-        /* Contenedor del grid */
-        .items-grid {
-            display: grid;
-            grid-template-columns: repeat(2, 1fr);
-            gap: 0.55rem;
-            width: 100%;
-            margin-bottom: 0.5rem;
-        }
-        /* Cada celda del grid */
-        .items-grid .grid-cell {
-            min-width: 0;
-        }
-        /* Las tarjetas de Streamlit dentro del grid llenan el ancho */
-        .items-grid div[data-testid="stVerticalBlockBorderWrapper"] {
-            height: 100%;
-            margin-bottom: 0 !important;
-        }
-        /* Alinear el number_input al centro dentro de la tarjeta */
-        .items-grid div[data-testid="stNumberInput"] {
-            margin: 0 auto !important;
-            width: 92% !important;
-        }
+        .inputs-ocultos { display: none !important; }
         </style>
-        <div class="items-grid" id="items-grid-root"></div>
-        <script>
-        // Mover cada tarjeta Streamlit al grid en cuanto existan en el DOM
-        (function montarGrid() {
-            const grid = document.getElementById('items-grid-root');
-            if (!grid) return;
+        """, unsafe_allow_html=True)
 
-            function colocarTarjetas() {
-                // Las tarjetas son los stVerticalBlock que están como hermanos del grid
-                const bloque = grid.parentElement;
-                if (!bloque) return;
-                // Buscar stVerticalBlockBorderWrapper hermanos
-                const tarjetas = bloque.querySelectorAll(
-                    ':scope > div > [data-testid="stVerticalBlock"] > ' +
-                    'div[data-testid="stVerticalBlockBorderWrapper"]'
-                );
-                if (tarjetas.length === 0) return;
-                grid.innerHTML = '';
-                tarjetas.forEach(function(t) {
-                    const cell = document.createElement('div');
-                    cell.className = 'grid-cell';
-                    cell.appendChild(t.cloneNode(true));
-                    grid.appendChild(cell);
-                });
-            }
+        with st.container():
+            st.markdown('<div class="inputs-ocultos">', unsafe_allow_html=True)
+            for item in items:
+                iid    = item["id"]
+                mi_qty = buffer.get(iid, 0)
+                nuevo  = st.number_input(
+                    f"qty_{iid}",
+                    min_value=0, max_value=999,
+                    value=mi_qty, step=1,
+                    key=f"qty_input_{iid}",
+                    label_visibility="collapsed",
+                )
+                if nuevo != mi_qty:
+                    st.session_state["buffer"][iid] = nuevo
+                    st.rerun()
+            st.markdown('</div>', unsafe_allow_html=True)
 
-            const obs = new MutationObserver(colocarTarjetas);
-            obs.observe(document.body, { childList: true, subtree: true });
-            colocarTarjetas();
-            setTimeout(colocarTarjetas, 400);
-        })();
-        </script>
-        """)
-
-        # Renderizar cada ítem en su propio @st.fragment (1 columna en Streamlit,
-        # el grid visual lo maneja el CSS de arriba)
-        @st.fragment
-        def renderizar_item(item):
+        # 2. Construir el HTML puro del grid
+        tarjetas_html = ""
+        for item in items:
             iid      = item["id"]
             emoji_i  = item["emoji"] or "📦"
             meta     = item["cantidad_meta"]
@@ -625,52 +593,168 @@ def vista_invitados():
             meta_ok  = asignado >= meta
             unidad_i = item.get("unidad") or ""
             ud       = f" {unidad_i}" if unidad_i else ""
-            mi_qty   = st.session_state["buffer"].get(iid, 0)
+            mi_qty   = buffer.get(iid, 0)
 
-            with st.container(border=True):
-                st.markdown(
-                    f'<div style="text-align:center;font-size:2.6rem;'
-                    f'line-height:1;margin-bottom:0.3rem;">{emoji_i}</div>',
-                    unsafe_allow_html=True,
-                )
-                st.markdown(
-                    f'<div style="text-align:center;font-weight:700;'
-                    f'color:#2d1b4e;font-size:1rem;margin-bottom:0.2rem;">'
-                    f'{item["nombre"]}</div>',
-                    unsafe_allow_html=True,
-                )
-                if meta_ok and mi_qty == 0:
-                    st.markdown(
-                        '<div style="text-align:center;font-size:0.8rem;'
-                        'color:#22c55e;font-weight:600;margin-bottom:0.7rem;">'
-                        '✅ ¡Meta cumplida!</div>',
-                        unsafe_allow_html=True,
-                    )
-                else:
-                    st.markdown(
-                        f'<div style="text-align:center;font-size:0.78rem;'
-                        f'color:#7c6fa0;margin-bottom:0.7rem;">'
-                        f'Faltan {faltan}{ud}</div>',
-                        unsafe_allow_html=True,
-                    )
-                nuevo_val = st.number_input(
-                    "Cantidad",
-                    min_value=0,
-                    max_value=999,
-                    value=mi_qty,
-                    step=1,
-                    key=f"qty_input_{iid}",
-                    label_visibility="collapsed",
-                    disabled=(meta_ok and mi_qty == 0),
-                )
-                if nuevo_val != mi_qty:
-                    st.session_state["buffer"][iid] = nuevo_val
-                    st.rerun()
+            if meta_ok and mi_qty == 0:
+                estado_html = '<div class="estado done">✅ ¡Meta cumplida!</div>'
+                disabled_plus = "disabled"
+            else:
+                estado_html = f'<div class="estado">{faltan}{ud} disponibles</div>'
+                disabled_plus = ""
 
-        # Renderizar todos los ítems secuencialmente;
-        # el CSS grid los reorganiza visualmente en 2 columnas
-        for item in items:
-            renderizar_item(item)
+            disabled_minus = "disabled" if mi_qty <= 0 else ""
+
+            tarjetas_html += f"""
+            <div class="card" data-iid="{iid}">
+                <div class="card-emoji">{emoji_i}</div>
+                <div class="card-nombre">{item['nombre']}</div>
+                {estado_html}
+                <div class="card-controls">
+                    <button class="btn-ctrl minus" data-iid="{iid}" {disabled_minus}>－</button>
+                    <span class="qty-display" id="qty-{iid}">{mi_qty}</span>
+                    <button class="btn-ctrl plus"  data-iid="{iid}" {disabled_plus}>＋</button>
+                </div>
+            </div>
+            """
+
+        import streamlit.components.v1 as components
+        components.html(f"""
+        <!DOCTYPE html>
+        <html>
+        <head>
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <style>
+            * {{ box-sizing: border-box; margin: 0; padding: 0; }}
+            body {{ background: transparent; font-family: 'Plus Jakarta Sans', sans-serif; }}
+
+            .grid {{
+                display: grid;
+                grid-template-columns: repeat(2, 1fr);
+                gap: 10px;
+                width: 100%;
+                padding: 4px 2px;
+            }}
+
+            .card {{
+                background: #ffffff;
+                border: 1.5px solid #ede6ff;
+                border-radius: 16px;
+                box-shadow: 0 2px 8px rgba(100,60,180,0.07);
+                padding: 14px 10px 12px;
+                display: flex;
+                flex-direction: column;
+                align-items: center;
+                gap: 4px;
+                transition: box-shadow 0.2s;
+            }}
+            .card:hover {{ box-shadow: 0 4px 16px rgba(100,60,180,0.13); }}
+
+            .card-emoji  {{ font-size: 2.4rem; line-height: 1; }}
+            .card-nombre {{
+                font-weight: 700; font-size: 0.95rem;
+                color: #2d1b4e; text-align: center;
+            }}
+            .estado {{
+                font-size: 0.75rem; color: #7c6fa0;
+                text-align: center; margin-bottom: 4px;
+            }}
+            .estado.done {{ color: #22c55e; font-weight: 600; }}
+
+            .card-controls {{
+                display: flex; align-items: center;
+                gap: 8px; margin-top: 4px;
+            }}
+            .btn-ctrl {{
+                width: 36px; height: 36px;
+                border-radius: 50%;
+                background: #f3eeff;
+                border: 1.5px solid #ddd6fe;
+                color: #6d28d9;
+                font-size: 1.1rem; font-weight: 700;
+                cursor: pointer;
+                display: flex; align-items: center; justify-content: center;
+                transition: background 0.15s;
+                -webkit-tap-highlight-color: transparent;
+            }}
+            .btn-ctrl:hover:not(:disabled)  {{ background: #ede0ff; border-color: #a78bfa; }}
+            .btn-ctrl:active:not(:disabled) {{ transform: scale(0.92); }}
+            .btn-ctrl:disabled {{ opacity: 0.3; cursor: default; }}
+
+            .qty-display {{
+                min-width: 32px; text-align: center;
+                font-size: 1.1rem; font-weight: 800;
+                color: #6d28d9;
+                background: #f3eeff;
+                border-radius: 8px;
+                padding: 2px 6px;
+            }}
+        </style>
+        </head>
+        <body>
+        <div class="grid">
+            {tarjetas_html}
+        </div>
+        <script>
+        // Buscar el number_input de Streamlit en el padre y actualizarlo
+        function setStInput(iid, val) {{
+            try {{
+                // Los inputs de Streamlit están en el documento padre
+                const frames = window.parent.document.querySelectorAll('iframe');
+                let input = null;
+                // Buscar en el propio iframe primero
+                const inputs = window.parent.document.querySelectorAll('input[type="number"]');
+                inputs.forEach(function(inp) {{
+                    if (inp.closest('[data-testid]') &&
+                        inp.id && inp.id.includes(String(iid))) {{
+                        input = inp;
+                    }}
+                }});
+                // Fallback: buscar por aria-label
+                if (!input) {{
+                    window.parent.document.querySelectorAll('input[type="number"]').forEach(function(inp) {{
+                        if (inp.getAttribute('aria-label') === 'qty_' + iid) input = inp;
+                    }});
+                }}
+                if (input) {{
+                    const nativeInputValueSetter = Object.getOwnPropertyDescriptor(
+                        window.HTMLInputElement.prototype, 'value'
+                    ).set;
+                    nativeInputValueSetter.call(input, val);
+                    input.dispatchEvent(new Event('input', {{ bubbles: true }}));
+                    input.dispatchEvent(new Event('change', {{ bubbles: true }}));
+                }}
+            }} catch(e) {{ console.log('setStInput error:', e); }}
+        }}
+
+        // Estado local del grid (sincronizado con Streamlit al hacer clic)
+        var qtys = {{}};
+        {chr(10).join(f"        qtys[{item['id']}] = {buffer.get(item['id'], 0)};" for item in items)}
+
+        document.querySelectorAll('.btn-ctrl').forEach(function(btn) {{
+            btn.addEventListener('click', function() {{
+                var iid  = parseInt(this.getAttribute('data-iid'));
+                var tipo = this.classList.contains('plus') ? 1 : -1;
+                var card = document.querySelector('.card[data-iid="' + iid + '"]');
+                var plus = card.querySelector('.plus');
+                var minus = card.querySelector('.minus');
+
+                qtys[iid] = Math.max(0, (qtys[iid] || 0) + tipo);
+
+                // Actualizar display local
+                document.getElementById('qty-' + iid).textContent = qtys[iid];
+
+                // Actualizar botones
+                minus.disabled = qtys[iid] <= 0;
+
+                // Enviar a Streamlit
+                setStInput(iid, qtys[iid]);
+            }});
+        }});
+        </script>
+        </body>
+        </html>
+        """, height=((len(items) + 1) // 2) * 175 + 20, scrolling=False)
+
 
     # ── Sección extras ──
     st.markdown("""
