@@ -580,20 +580,26 @@ def vista_invitados():
         # CSS para colapsar los st.empty wrappers a cero altura real
         st.markdown("""
         <style>
-        /* Colapsar todos los stNumberInput y sus wrappers a altura 0 */
+       /* Colapsar de forma agresiva los inputs y sus contenedores */
         [data-testid="stNumberInput"] {
-            position: absolute !important;
-            opacity: 0 !important;
-            pointer-events: none !important;
-            height: 0 !important;
-            overflow: hidden !important;
+            display: none !important; 
         }
-        /* También el div padre que Streamlit envuelve alrededor del empty */
-        [data-testid="stVerticalBlock"] > div:has([data-testid="stNumberInput"]) {
+        
+        /* Selector para navegadores modernos */
+        [data-testid="stElementContainer"]:has([data-testid="stNumberInput"]) {
+            position: absolute !important;
+            width: 0 !important;
             height: 0 !important;
-            overflow: hidden !important;
+            min-height: 0 !important;
             margin: 0 !important;
             padding: 0 !important;
+            visibility: hidden !important;
+            border: none !important;
+        }
+        
+        /* Eliminar el gap del bloque vertical principal */
+        [data-testid="stVerticalBlock"]:has([data-testid="stNumberInput"]) {
+            gap: 0 !important;
         }
         </style>
         """, unsafe_allow_html=True)
@@ -727,6 +733,28 @@ def vista_invitados():
             {tarjetas_html}
         </div>
         <script>
+        // Forzar colapso del DOM de Streamlit para móviles viejos
+        try {
+            var doc = window.parent.document;
+            var stInputs = doc.querySelectorAll('[data-testid="stNumberInput"]');
+            stInputs.forEach(function(inp) {
+                var container = inp.closest('[data-testid="stElementContainer"]');
+                if (container) {
+                    container.style.position = 'absolute';
+                    container.style.height = '0px';
+                    container.style.minHeight = '0px';
+                    container.style.margin = '0px';
+                    container.style.padding = '0px';
+                    container.style.visibility = 'hidden';
+                    container.style.border = 'none';
+                }
+                // Buscar el bloque vertical padre y quitarle el gap
+                var verticalBlock = inp.closest('[data-testid="stVerticalBlock"]');
+                if (verticalBlock) {
+                    verticalBlock.style.gap = '0px';
+                }
+            });
+        } catch(e) {}
         // ── Sincronizar con Streamlit ──────────────────────────────
         function setStInput(iid, val) {{
             try {{
