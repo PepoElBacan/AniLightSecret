@@ -329,6 +329,19 @@ def pantalla_bienvenida():
         st.info("👈 Ingresa tu contraseña en el panel lateral para acceder")
 
     if entrar:
+        nombre_limpio = nombre_input.strip().lower()
+        variaciones_luz = [
+            "luz arteaga", "lux arteaga", "luz", "lux", 
+            "maria de la luz arteaga"
+        ]
+        
+        # Chequeo si el nombre exacto está en la lista o si contiene luz/lux + arteaga
+        if nombre_limpio in variaciones_luz or ("arteaga" in nombre_limpio and ("luz" in nombre_limpio or "lux" in nombre_limpio)):
+            st.error("🚨 ¡ERROR 404: CUMPLEAÑERA DETECTADA! 🚨", icon="⚠️")
+            st.warning("¡Alto ahí! Esta es una zona clasificada de nivel máximo. Se supone que es una sorpresa... ¡Cierra los ojos y sal de la página! 🫣🤎")
+            st.snow()  # Efecto divertido que congela un poco la pantalla
+            return
+        
         nombre = nombre_input.strip()
         if not nombre:
             st.warning("¡Escribe tu nombre para continuar! 😊")
