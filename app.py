@@ -879,7 +879,7 @@ def vista_admin():
             with col_meta:
                 meta_nueva = st.number_input("Cantidad", min_value=1, max_value=9999, value=5)
             with col_unidad:
-                unidad_nueva = st.text_input("Unidad", placeholder="Ej: potes, bolsas...")
+                unidad_nueva = st.text_input("Unidad", placeholder="Ej: bolsas, unidades, litros...")
             
             submitted = st.form_submit_button("Agregar ítem 🤎", use_container_width=True)
 
